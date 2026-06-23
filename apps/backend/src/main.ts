@@ -33,24 +33,7 @@ async function bootstrap(): Promise<INestApplication | void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-
-  const swaggerOptions = process.env.VERCEL
-    ? {
-        customCssUrl: [
-          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-          'https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-muted.css',
-        ],
-        customCss: `
-          body { background-color: #222; }
-        `,
-        customJs: [
-          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
-          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
-        ],
-      }
-    : {};
-
-  SwaggerModule.setup('api/docs', app, document, swaggerOptions);
+  SwaggerModule.setup('api/docs', app, document);
 
   const expressApp: Application = httpAdapter.getInstance();
   expressApp.get('/', (req: Request, res: Response) =>
