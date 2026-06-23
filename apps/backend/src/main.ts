@@ -32,14 +32,21 @@ async function bootstrap(): Promise<INestApplication | void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    customCssUrl:
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
-    ],
-  });
+
+  const swaggerOptions = process.env.VERCEL
+    ? {
+        customCssUrl: [
+          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
+          'https://unpkg.com/swagger-ui-theme-dark/build/swagger-ui-theme-dark.css',
+        ],
+        customJs: [
+          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
+          'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
+        ],
+      }
+    : {};
+
+  SwaggerModule.setup('api/docs', app, document, swaggerOptions);
 
   if (process.env.VERCEL) {
     return app;
