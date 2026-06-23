@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
 import { IncomingMessage, ServerResponse } from 'node:http';
+import type { Request, Response, Application } from 'express';
 
 type HttpHandler = (req: IncomingMessage, res: ServerResponse) => void;
 
@@ -37,8 +38,11 @@ async function bootstrap(): Promise<INestApplication | void> {
     ? {
         customCssUrl: [
           'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-          'https://unpkg.com/swagger-ui-theme-dark/build/swagger-ui-theme-dark.css',
+          'https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-muted.css',
         ],
+        customCss: `
+          body { background-color: #222; }
+        `,
         customJs: [
           'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
           'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
@@ -47,6 +51,14 @@ async function bootstrap(): Promise<INestApplication | void> {
     : {};
 
   SwaggerModule.setup('api/docs', app, document, swaggerOptions);
+
+  const expressApp: Application = httpAdapter.getInstance();
+  expressApp.get('/', (req: Request, res: Response) =>
+    res.redirect('/api/docs'),
+  );
+  expressApp.get('/api', (req: Request, res: Response) =>
+    res.redirect('/api/docs'),
+  );
 
   if (process.env.VERCEL) {
     return app;
