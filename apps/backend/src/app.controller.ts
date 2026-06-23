@@ -1,12 +1,23 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Redirect } from '@nestjs/common';
+import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 
+@ApiTags('System')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @ApiExcludeEndpoint()
+  @Redirect('/api/docs', 301)
+  redirectRoot() {
+    return { url: '/api/docs' };
+  }
+  @Get('health')
+  @ApiOperation({ summary: 'Verifica el estado de salud de la API' })
+  checkHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0',
+    };
   }
 }
