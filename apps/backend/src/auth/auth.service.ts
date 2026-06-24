@@ -71,7 +71,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findByEmail(dto.email);
+    const user = await this.usersService.findByIdentifier(dto.identifier);
     if (!user) {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
@@ -83,8 +83,61 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    const salt = await bcrypt.genSalt();
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
     };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify<{
+        sub: string;
+        email: string;
+        role: string;
+      }>(refreshToken);
+
+      const user = await this.usersService.findById(payload.sub);
+      if (!user?.refreshToken) {
+        throw new UnauthorizedException('Acceso denegado');
+      }
+
+      const isRefreshTokenValid = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
+      if (!isRefreshTokenValid) {
+        throw new UnauthorizedException('Acceso denegado');
+      }
+
+      const newPayload = { sub: user.id, email: user.email, role: user.role };
+      const newAccessToken = this.jwtService.sign(newPayload);
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        expiresIn: '7d',
+      });
+
+      const salt = await bcrypt.genSalt();
+      const hashedRefreshToken = await bcrypt.hash(newRefreshToken, salt);
+      await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch {
+      throw new UnauthorizedException('Refresh token inválido o expirado');
+    }
+  }
+
+  async logout(userId: string) {
+    await this.usersService.updateRefreshToken(userId, null);
+    return { message: 'Sesión cerrada exitosamente' };
   }
 }

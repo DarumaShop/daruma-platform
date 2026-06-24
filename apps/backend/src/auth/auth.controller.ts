@@ -6,6 +6,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,6 +17,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
@@ -83,5 +85,30 @@ export class AuthController {
   generateInvite() {
     const token = this.authService.generateInviteToken();
     return { inviteToken: token };
+  }
+
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Refresca los tokens de acceso usando un Refresh Token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Nuevos tokens generados exitosamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token inválido o expirado',
+  })
+  async refresh(@Body() body: RefreshDto) {
+    return this.authService.refreshToken(body.refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('logout')
+  @ApiOperation({ summary: 'Cierra sesión e invalida el Refresh Token' })
+  @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente' })
+  async logout(@Req() req: { user: { sub: string } }) {
+    return this.authService.logout(req.user.sub);
   }
 }

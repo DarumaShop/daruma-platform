@@ -1,0 +1,5 @@
+model PendingUpload {
+  id        String   @id @default(uuid())
+  url       String   @unique
+  createdAt DateTime @default(now())
+}

@@ -1,10 +1,14 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
-  @ApiProperty({ example: 'admin@daruma.com' })
-  @IsEmail({}, { message: 'El formato del correo es inválido' })
-  email!: string;
+  @ApiProperty({
+    example: 'admin@daruma.com',
+    description: 'Correo electrónico o Nombre de usuario',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'El identificador (correo o usuario) es obligatorio' })
+  identifier!: string;
 
   @ApiProperty({ example: 'secreto123' })
   @IsString()
