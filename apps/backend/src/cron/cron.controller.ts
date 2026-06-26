@@ -30,8 +30,8 @@ export class CronController {
   })
   @ApiTags('Crons')
   async triggerGarbageCollection(@Headers('authorization') authHeader: string) {
-    const cronSecret = this.configService.get<string>('CRON_SECRET');
-    const token = authHeader?.split(' ')[1];
+    const cronSecret = this.configService.get<string>('CRON_SECRET')?.trim();
+    const token = authHeader?.replace('Bearer ', '')?.trim();
 
     if (!token || token !== cronSecret) {
       throw new UnauthorizedException('Acceso denegado al cron');
