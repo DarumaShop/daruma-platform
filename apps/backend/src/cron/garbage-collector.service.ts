@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 
@@ -12,17 +12,16 @@ export class GarbageCollectorService {
     private readonly uploadsService: UploadsService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async handleOrphanedImages() {
     this.logger.log('Iniciando recolección de basura de imágenes huérfanas...');
 
     try {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000); // 10 minutos para pruebas
 
       const orphanedUploads = await this.prisma.pendingUpload.findMany({
         where: {
           createdAt: {
-            lt: twentyFourHoursAgo,
+            lt: tenMinutesAgo,
           },
         },
       });

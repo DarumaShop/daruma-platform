@@ -14,5 +14,11 @@
       "src": "/(.*)",
       "dest": "src/main.ts"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/crons/garbage-collection",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }
