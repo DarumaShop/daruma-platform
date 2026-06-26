@@ -16,12 +16,12 @@ export class GarbageCollectorService {
     this.logger.log('Iniciando recolección de basura de imágenes huérfanas...');
 
     try {
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000); // 10 minutos para pruebas
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       const orphanedUploads = await this.prisma.pendingUpload.findMany({
         where: {
           createdAt: {
-            lt: tenMinutesAgo,
+            lt: twentyFourHoursAgo,
           },
         },
       });

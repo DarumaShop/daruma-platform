@@ -18,7 +18,7 @@
   "crons": [
     {
       "path": "/api/crons/garbage-collection",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
