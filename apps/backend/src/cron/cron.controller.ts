@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GarbageCollectorService } from './garbage-collector.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Crons')
 @Controller('crons')
@@ -23,21 +28,11 @@ export class CronController {
   })
   @ApiResponse({ status: 200, description: 'Recolección ejecutada' })
   @ApiResponse({ status: 401, description: 'Acceso no autorizado' })
-  @ApiHeader({
-    name: 'authorization',
-    description: 'Debe ser en formato: Bearer TU_CRON_SECRET',
-    required: true,
-  })
+  @ApiBearerAuth()
   @ApiTags('Crons')
   async triggerGarbageCollection(@Headers('authorization') authHeader: string) {
     const cronSecret = this.configService.get<string>('CRON_SECRET')?.trim();
     const token = authHeader?.replace('Bearer ', '')?.trim();
-
-    console.log('--- DEBUG CRON ---');
-    console.log('AuthHeader recibido:', authHeader);
-    console.log('Token extraído:', token);
-    console.log('Secret esperado:', cronSecret);
-    console.log('¿Coinciden?', token === cronSecret);
 
     if (!token || token !== cronSecret) {
       throw new UnauthorizedException('Acceso denegado al cron');
