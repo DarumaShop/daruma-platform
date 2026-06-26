@@ -1,9 +1,5 @@
-import {
-  Controller,
-  Get,
-  Headers,
-  UnauthorizedException,
-} from '@nestjs/common';
+import type { Request } from 'express';
+import { Controller, Get, Req, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GarbageCollectorService } from './garbage-collector.service';
 import {
@@ -30,7 +26,8 @@ export class CronController {
   @ApiResponse({ status: 401, description: 'Acceso no autorizado' })
   @ApiBearerAuth()
   @ApiTags('Crons')
-  async triggerGarbageCollection(@Headers('authorization') authHeader: string) {
+  async triggerGarbageCollection(@Req() req: Request) {
+    const authHeader = req.headers['authorization'];
     const cronSecret = this.configService.get<string>('CRON_SECRET')?.trim();
     const token = authHeader?.replace('Bearer ', '')?.trim();
 
