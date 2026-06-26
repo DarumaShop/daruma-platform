@@ -33,6 +33,12 @@ export class CronController {
     const cronSecret = this.configService.get<string>('CRON_SECRET')?.trim();
     const token = authHeader?.replace('Bearer ', '')?.trim();
 
+    console.log('--- DEBUG CRON ---');
+    console.log('AuthHeader recibido:', authHeader);
+    console.log('Token extraído:', token);
+    console.log('Secret esperado:', cronSecret);
+    console.log('¿Coinciden?', token === cronSecret);
+
     if (!token || token !== cronSecret) {
       throw new UnauthorizedException('Acceso denegado al cron');
     }
