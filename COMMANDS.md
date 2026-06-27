@@ -64,6 +64,14 @@ Dado que cada app tiene su propio `.env`, debes navegar a su carpeta específica
   ```
   *(Recordatorio: Nuestro comando build del backend ya incluye `prisma generate` automáticamente).*
 
+- **Solución a errores fantasmas de TypeScript / Linter:**
+  Si luego de una migración ves que ESLint marca tipos de Prisma como *Unsafe member access* o que "no existe" un modelo recién creado, debes forzar la regeneración del cliente y reiniciar el servidor de TypeScript:
+  ```bash
+  cd apps/backend
+  npx prisma generate
+  ```
+  *(En VSCode, pulsa `Ctrl + Shift + P` -> "TypeScript: Restart TS server" para que lea los nuevos tipos).*
+
 - **Abrir el visor visual de la Base de Datos:**
   ```bash
   cd apps/backend

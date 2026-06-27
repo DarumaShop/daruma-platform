@@ -10,8 +10,14 @@ import {
   ValidateNested,
   Min,
   IsNumber,
+  IsBoolean,
+  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+// ==========================================
+// DETALLES COMUNES (Padre)
+// ==========================================
 
 export class NotebookDetailsDto {
   @ApiProperty({ description: 'Largo en cm' })
@@ -25,14 +31,6 @@ export class NotebookDetailsDto {
   @ApiProperty({ description: 'Alto en cm' })
   @IsNumber()
   height: number;
-
-  @ApiProperty({ enum: PageCount, description: 'Número de páginas' })
-  @IsEnum(PageCount)
-  pageCount: PageCount;
-
-  @ApiProperty({ enum: PaperType, description: 'Tipo de hoja' })
-  @IsEnum(PaperType)
-  paperType: PaperType;
 }
 
 export class NotepadDetailsDto {
@@ -47,21 +45,9 @@ export class NotepadDetailsDto {
   @ApiProperty({ description: 'Alto en cm' })
   @IsNumber()
   height: number;
-
-  @ApiProperty({ enum: PageCount, description: 'Número de páginas' })
-  @IsEnum(PageCount)
-  pageCount: PageCount;
-
-  @ApiProperty({ enum: PaperType, description: 'Tipo de hoja' })
-  @IsEnum(PaperType)
-  paperType: PaperType;
 }
 
 export class PosterDetailsDto {
-  @ApiProperty({ enum: PosterSize, description: 'Tamaño del poster' })
-  @IsEnum(PosterSize)
-  size: PosterSize;
-
   @ApiProperty({ description: 'Ancho en cm' })
   @IsNumber()
   width: number;
@@ -71,23 +57,47 @@ export class PosterDetailsDto {
   height: number;
 }
 
-export class CreateProductDto {
-  @ApiProperty({ description: 'Nombre del producto' })
+// ==========================================
+// DETALLES DE VARIANTE
+// ==========================================
+
+export class NotebookVariantDetailsDto {
+  @ApiProperty({ enum: PageCount, description: 'Número de páginas' })
+  @IsEnum(PageCount)
+  pageCount: PageCount;
+
+  @ApiProperty({ enum: PaperType, description: 'Tipo de hoja' })
+  @IsEnum(PaperType)
+  paperType: PaperType;
+}
+
+export class NotepadVariantDetailsDto {
+  @ApiProperty({ enum: PageCount, description: 'Número de páginas' })
+  @IsEnum(PageCount)
+  pageCount: PageCount;
+
+  @ApiProperty({ enum: PaperType, description: 'Tipo de hoja' })
+  @IsEnum(PaperType)
+  paperType: PaperType;
+}
+
+export class PosterVariantDetailsDto {
+  @ApiProperty({ enum: PosterSize, description: 'Tamaño del poster' })
+  @IsEnum(PosterSize)
+  size: PosterSize;
+}
+
+// ==========================================
+// DTO DE VARIANTE PRINCIPAL
+// ==========================================
+
+export class CreateProductVariantDto {
+  @ApiProperty({ description: 'SKU (código único) de la variante' })
   @IsNotEmpty()
   @IsString()
-  name: string;
+  sku: string;
 
-  @ApiProperty({ description: 'Slug único (Ej: mi-producto-genial)' })
-  @IsNotEmpty()
-  @IsString()
-  slug: string;
-
-  @ApiProperty({ description: 'Descripción detallada' })
-  @IsNotEmpty()
-  @IsString()
-  description: string;
-
-  @ApiProperty({ description: 'Precio base en centavos o moneda base' })
+  @ApiProperty({ description: 'Precio base en moneda o centavos' })
   @IsInt()
   @Min(0)
   price: number;
@@ -104,6 +114,53 @@ export class CreateProductDto {
   @Min(0)
   stock?: number;
 
+  @ApiPropertyOptional({
+    description: '¿Está activa esta variante?',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ type: NotebookVariantDetailsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NotebookVariantDetailsDto)
+  notebookVariantDetails?: NotebookVariantDetailsDto;
+
+  @ApiPropertyOptional({ type: NotepadVariantDetailsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NotepadVariantDetailsDto)
+  notepadVariantDetails?: NotepadVariantDetailsDto;
+
+  @ApiPropertyOptional({ type: PosterVariantDetailsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PosterVariantDetailsDto)
+  posterVariantDetails?: PosterVariantDetailsDto;
+}
+
+// ==========================================
+// DTO DEL PRODUCTO PADRE
+// ==========================================
+
+export class CreateProductDto {
+  @ApiProperty({ description: 'Nombre del producto padre' })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Slug único (Ej: mi-producto-genial)' })
+  @IsNotEmpty()
+  @IsString()
+  slug: string;
+
+  @ApiProperty({ description: 'Descripción detallada' })
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+
   @ApiProperty({
     enum: ProductType,
     description: 'Tipo principal del producto',
@@ -113,10 +170,11 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({ description: 'Destacar en portada', default: false })
   @IsOptional()
+  @IsBoolean()
   isFeatured?: boolean;
 
   @ApiPropertyOptional({
-    description: 'IDs de las imágenes subidas a asignar al producto',
+    description: 'URLs de las imágenes subidas a asignar al producto',
     type: [String],
   })
   @IsOptional()
@@ -147,4 +205,14 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => PosterDetailsDto)
   posterDetails?: PosterDetailsDto;
+
+  @ApiProperty({
+    description: 'Arreglo de variantes asociadas a este producto',
+    type: [CreateProductVariantDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1, { message: 'El producto debe tener al menos una variante' })
+  @Type(() => CreateProductVariantDto)
+  variants: CreateProductVariantDto[];
 }

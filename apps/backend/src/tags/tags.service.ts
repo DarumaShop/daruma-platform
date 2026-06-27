@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 
@@ -17,14 +21,38 @@ export class TagsService {
   }
 
   async findAll() {
-    return this.prisma.tag.findMany({
+    const allTags = await this.prisma.tag.findMany({
       include: {
-        children: true,
-      },
-      where: {
-        parentId: null,
+        _count: {
+          select: { products: { where: { isActive: true } } },
+        },
       },
     });
+
+    type TagWithCount = (typeof allTags)[0];
+    type TagTree = TagWithCount & { children: TagTree[] };
+
+    const tagMap = new Map<string, TagTree>();
+    allTags.forEach((tag) => {
+      tagMap.set(tag.id, { ...tag, children: [] });
+    });
+
+    const rootTags: TagTree[] = [];
+    allTags.forEach((tag) => {
+      if (tag.parentId) {
+        const parent = tagMap.get(tag.parentId);
+        if (parent) {
+          parent.children.push(tagMap.get(tag.id) as TagTree);
+        } else {
+          // Fallback por si hay orfandad lógica, lo tratamos como root
+          rootTags.push(tagMap.get(tag.id) as TagTree);
+        }
+      } else {
+        rootTags.push(tagMap.get(tag.id) as TagTree);
+      }
+    });
+
+    return rootTags;
   }
 
   async findOne(id: string) {
@@ -35,6 +63,22 @@ export class TagsService {
     if (!tag)
       throw new NotFoundException(`Etiqueta con ID ${id} no encontrada`);
     return tag;
+  }
+
+  async update(id: string, dto: import('./dto/update-tag.dto').UpdateTagDto) {
+    if (dto.parentId && dto.parentId === id) {
+      throw new ConflictException(
+        'Una etiqueta no puede ser padre de sí misma',
+      );
+    }
+
+    return this.prisma.tag.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        parentId: dto.parentId,
+      },
+    });
   }
 
   async remove(id: string) {
