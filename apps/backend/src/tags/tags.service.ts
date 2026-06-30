@@ -20,14 +20,24 @@ export class TagsService {
     });
   }
 
-  async findAll() {
+  async findAll(search?: string) {
+    const whereClause = search
+      ? { name: { contains: search, mode: 'insensitive' as const } }
+      : {};
+
     const allTags = await this.prisma.tag.findMany({
+      where: whereClause,
       include: {
         _count: {
           select: { products: { where: { isActive: true } } },
         },
       },
     });
+
+    // Si hay una búsqueda, devolvemos una lista plana con las coincidencias
+    if (search) {
+      return allTags;
+    }
 
     type TagWithCount = (typeof allTags)[0];
     type TagTree = TagWithCount & { children: TagTree[] };
@@ -55,14 +65,53 @@ export class TagsService {
     return rootTags;
   }
 
-  async findOne(id: string) {
-    const tag = await this.prisma.tag.findUnique({
-      where: { id },
-      include: { children: true },
+  async findOne(id: string, withTree: boolean = false) {
+    if (!withTree) {
+      const tag = await this.prisma.tag.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: { products: { where: { isActive: true } } },
+          },
+        },
+      });
+      if (!tag)
+        throw new NotFoundException(`Etiqueta con ID ${id} no encontrada`);
+      return tag;
+    }
+
+    // Si pide el árbol completo (hijos infinitos), usamos el mapa en memoria
+    const allTags = await this.prisma.tag.findMany({
+      include: {
+        _count: {
+          select: { products: { where: { isActive: true } } },
+        },
+      },
     });
-    if (!tag)
+
+    type TagWithCount = (typeof allTags)[0];
+    type TagTree = TagWithCount & { children: TagTree[] };
+
+    const tagMap = new Map<string, TagTree>();
+    allTags.forEach((tag) => {
+      tagMap.set(tag.id, { ...tag, children: [] });
+    });
+
+    allTags.forEach((tag) => {
+      if (tag.parentId) {
+        const parent = tagMap.get(tag.parentId);
+        if (parent) {
+          parent.children.push(tagMap.get(tag.id) as TagTree);
+        }
+      }
+    });
+
+    const requestedTag = tagMap.get(id);
+    if (!requestedTag) {
       throw new NotFoundException(`Etiqueta con ID ${id} no encontrada`);
-    return tag;
+    }
+
+    return requestedTag;
   }
 
   async update(id: string, dto: import('./dto/update-tag.dto').UpdateTagDto) {

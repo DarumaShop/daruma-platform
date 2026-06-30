@@ -7,7 +7,7 @@ export class DashboardService {
 
   async getStats() {
     const [totalActiveProducts, totalTags, outOfStockVariants] =
-      await this.prisma.$transaction([
+      await Promise.all([
         this.prisma.product.count({ where: { isActive: true } }),
         this.prisma.tag.count(),
         this.prisma.productVariant.findMany({

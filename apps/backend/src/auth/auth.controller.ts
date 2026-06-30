@@ -71,7 +71,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Genera un token de invitación (ADMIN)',
     description:
-      'Crea un token JWT válido por 24 horas que permite a un administrador invitar a nuevos administradores al sistema.',
+      'Crea un token JWT válido por 12 horas que permite a un administrador invitar a nuevos administradores al sistema.',
   })
   @ApiResponse({
     status: 200,
@@ -108,7 +108,7 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'Cierra sesión e invalida el Refresh Token' })
   @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente' })
-  async logout(@Req() req: { user: { sub: string } }) {
-    return this.authService.logout(req.user.sub);
+  async logout(@Req() req: { user: { id: string } }) {
+    return this.authService.logout(req.user.id);
   }
 }

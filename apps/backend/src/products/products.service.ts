@@ -32,6 +32,15 @@ export class ProductsService {
       tagMap.set(tag.id, tag.parentId);
     }
 
+    // Verificar que los IDs proporcionados existan
+    for (const id of tagIds) {
+      if (!tagMap.has(id)) {
+        throw new BadRequestException(
+          `La etiqueta proporcionada (${id}) no existe en la base de datos`,
+        );
+      }
+    }
+
     const resolvedIds = new Set<string>();
 
     for (const id of tagIds) {
@@ -45,18 +54,52 @@ export class ProductsService {
     return Array.from(resolvedIds);
   }
 
+  private extractSignificantNamePart(name: string): string {
+    const stopWords = new Set([
+      'cuaderno',
+      'cuadernos',
+      'libreta',
+      'libretas',
+      'poster',
+      'posters',
+      'de',
+      'el',
+      'la',
+      'los',
+      'las',
+      'un',
+      'una',
+      'para',
+      'con',
+      'del',
+    ]);
+
+    // Limpiar acentos y pasar a minúsculas
+    const cleanName = name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    // Extraer palabras, ignorar stopwords, y tomar la primera que quede
+    const words = cleanName
+      .split(/\s+/)
+      .map((w) => w.replace(/[^a-z0-9]/g, ''))
+      .filter((w) => w.length > 0);
+    const significantWords = words.filter((w) => !stopWords.has(w));
+
+    const targetWord =
+      significantWords.length > 0 ? significantWords[0] : words[0] || 'XXX';
+
+    return targetWord.substring(0, 3).toUpperCase().padEnd(3, 'X');
+  }
+
   async suggestSku(type: import('@prisma/client').ProductType, name: string) {
     let prefix = 'PRD';
     if (type === 'NOTEBOOK') prefix = 'NB';
     else if (type === 'NOTEPAD') prefix = 'NP';
     else if (type === 'POSTER') prefix = 'PT';
 
-    const namePart = name
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .substring(0, 3)
-      .toUpperCase();
-
-    const finalNamePart = namePart.length > 0 ? namePart : 'XXX';
+    const finalNamePart = this.extractSignificantNamePart(name);
 
     let isUnique = false;
     let sku = '';
@@ -89,12 +132,7 @@ export class ProductsService {
     else if (type === 'NOTEPAD') prefix = 'NP';
     else if (type === 'POSTER') prefix = 'PT';
 
-    const namePart = name
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .substring(0, 3)
-      .toUpperCase();
-
-    const finalNamePart = namePart.length > 0 ? namePart : 'XXX';
+    const finalNamePart = this.extractSignificantNamePart(name);
     const expectedPrefix = `${prefix}-${finalNamePart}-`;
 
     if (!sku.startsWith(expectedPrefix)) {
@@ -386,7 +424,7 @@ export class ProductsService {
     const whereClause = this.buildFilterQuery(filters, false);
     const orderByClause = this.getOrderByClause(orderBy);
 
-    const [totalItems, products] = await this.prisma.$transaction([
+    const [totalItems, products] = await Promise.all([
       this.prisma.product.count({ where: whereClause }),
       this.prisma.product.findMany({
         where: whereClause,
@@ -430,7 +468,7 @@ export class ProductsService {
     const whereClause = this.buildFilterQuery(filters, true);
     const orderByClause = this.getOrderByClause(orderBy);
 
-    const [totalItems, products] = await this.prisma.$transaction([
+    const [totalItems, products] = await Promise.all([
       this.prisma.product.count({ where: whereClause }),
       this.prisma.product.findMany({
         where: whereClause,

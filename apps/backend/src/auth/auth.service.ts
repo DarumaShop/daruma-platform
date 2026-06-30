@@ -23,7 +23,7 @@ export class AuthService {
       this.configService.get<string>('INVITE_SECRET') || 'invite-secret';
     return this.jwtService.sign(
       { purpose: 'admin_invite' },
-      { secret: inviteSecret, expiresIn: '24h' },
+      { secret: inviteSecret, expiresIn: '12h' },
     );
   }
 

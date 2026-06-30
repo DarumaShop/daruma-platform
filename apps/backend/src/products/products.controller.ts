@@ -15,7 +15,9 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
+import { ProductType } from '@prisma/client';
 import { ProductsService } from './products.service';
 import {
   CreateProductDto,
@@ -56,10 +58,9 @@ export class ProductsController {
       '(ADMIN) Sugiere un SKU automático basado en el tipo y nombre del producto',
   })
   @ApiResponse({ status: 200, description: 'SKU sugerido' })
-  suggestSku(
-    @Query('type') type: import('@prisma/client').ProductType,
-    @Query('name') name: string,
-  ) {
+  @ApiQuery({ name: 'type', enum: ProductType, required: true })
+  @ApiQuery({ name: 'name', type: String, required: true })
+  suggestSku(@Query('type') type: ProductType, @Query('name') name: string) {
     if (!type || !name) {
       throw new BadRequestException('type y name son obligatorios');
     }
