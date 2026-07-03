@@ -1,5 +1,23 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductType, PageCount, PaperType, PosterSize } from '@prisma/client';
+import { ProductType } from '@prisma/client';
+
+export enum PageCount {
+  PAGES_60 = 'PAGES_60',
+  PAGES_80 = 'PAGES_80',
+  PAGES_100 = 'PAGES_100',
+}
+
+export enum PaperType {
+  GRID = 'GRID',
+  LINED = 'LINED',
+  BLANK = 'BLANK',
+}
+
+export enum PosterSize {
+  SMALL = 'SMALL',
+  MEDIUM = 'MEDIUM',
+  LARGE = 'LARGE',
+}
 import {
   IsEnum,
   IsInt,

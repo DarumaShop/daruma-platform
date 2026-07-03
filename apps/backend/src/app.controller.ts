@@ -1,7 +1,7 @@
 import { Controller, Get, Redirect } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 
-@ApiTags('System')
+@ApiTags('System (Public)')
 @Controller()
 export class AppController {
   @Get()
@@ -11,7 +11,7 @@ export class AppController {
     return { url: '/api/docs' };
   }
   @Get('health')
-  @ApiOperation({ summary: 'Verifica el estado de salud de la API' })
+  @ApiOperation({ summary: '(PUBLIC) Verifica el estado de salud de la API.' })
   checkHealth() {
     return {
       status: 'ok',

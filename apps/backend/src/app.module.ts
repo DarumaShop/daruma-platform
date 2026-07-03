@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { TagsModule } from './tags/tags.module';
 import { ProductsModule } from './products/products.module';
-import { InventoryModule } from './inventory/inventory.module';
 import { CronModule } from './cron/cron.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
@@ -31,7 +30,6 @@ import * as Joi from 'joi';
     UploadsModule,
     TagsModule,
     ProductsModule,
-    InventoryModule,
     CronModule,
     DashboardModule,
   ],

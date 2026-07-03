@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductType, PageCount, PaperType, PosterSize } from '@prisma/client';
+import { ProductType } from '@prisma/client';
 import {
   IsEnum,
   IsInt,
@@ -9,11 +9,11 @@ import {
   IsArray,
   ValidateNested,
   Min,
-  IsNumber,
   IsBoolean,
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PageCount, PaperType, PosterSize } from './get-products-filter.dto';
 
 // ==========================================
 // DETALLES COMUNES (Padre)
@@ -21,39 +21,39 @@ import { Type } from 'class-transformer';
 
 export class NotebookDetailsDto {
   @ApiProperty({ description: 'Largo en cm' })
-  @IsNumber()
+  @IsInt()
   length: number;
 
   @ApiProperty({ description: 'Ancho en cm' })
-  @IsNumber()
+  @IsInt()
   width: number;
 
   @ApiProperty({ description: 'Alto en cm' })
-  @IsNumber()
+  @IsInt()
   height: number;
 }
 
 export class NotepadDetailsDto {
   @ApiProperty({ description: 'Largo en cm' })
-  @IsNumber()
+  @IsInt()
   length: number;
 
   @ApiProperty({ description: 'Ancho en cm' })
-  @IsNumber()
+  @IsInt()
   width: number;
 
   @ApiProperty({ description: 'Alto en cm' })
-  @IsNumber()
+  @IsInt()
   height: number;
 }
 
 export class PosterDetailsDto {
   @ApiProperty({ description: 'Ancho en cm' })
-  @IsNumber()
+  @IsInt()
   width: number;
 
   @ApiProperty({ description: 'Alto en cm' })
-  @IsNumber()
+  @IsInt()
   height: number;
 }
 
@@ -92,11 +92,6 @@ export class PosterVariantDetailsDto {
 // ==========================================
 
 export class CreateProductVariantDto {
-  @ApiProperty({ description: 'SKU (código único) de la variante' })
-  @IsNotEmpty()
-  @IsString()
-  sku: string;
-
   @ApiProperty({ description: 'Precio base en moneda o centavos' })
   @IsInt()
   @Min(0)
@@ -113,14 +108,6 @@ export class CreateProductVariantDto {
   @IsInt()
   @Min(0)
   stock?: number;
-
-  @ApiPropertyOptional({
-    description: '¿Está activa esta variante?',
-    default: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
 
   @ApiPropertyOptional({ type: NotebookVariantDetailsDto })
   @IsOptional()
@@ -150,11 +137,6 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsString()
   name: string;
-
-  @ApiProperty({ description: 'Slug único (Ej: mi-producto-genial)' })
-  @IsNotEmpty()
-  @IsString()
-  slug: string;
 
   @ApiProperty({ description: 'Descripción detallada' })
   @IsNotEmpty()
@@ -205,14 +187,4 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => PosterDetailsDto)
   posterDetails?: PosterDetailsDto;
-
-  @ApiProperty({
-    description: 'Arreglo de variantes asociadas a este producto',
-    type: [CreateProductVariantDto],
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @ArrayMinSize(1, { message: 'El producto debe tener al menos una variante' })
-  @Type(() => CreateProductVariantDto)
-  variants: CreateProductVariantDto[];
 }

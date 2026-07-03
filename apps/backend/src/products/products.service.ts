@@ -10,6 +10,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 import { UploadsService } from '../uploads/uploads.service';
 import { Prisma } from '@prisma/client';
+import slugify from 'slugify';
 
 @Injectable()
 export class ProductsService {
@@ -32,7 +33,6 @@ export class ProductsService {
       tagMap.set(tag.id, tag.parentId);
     }
 
-    // Verificar que los IDs proporcionados existan
     for (const id of tagIds) {
       if (!tagMap.has(id)) {
         throw new BadRequestException(
@@ -54,174 +54,127 @@ export class ProductsService {
     return Array.from(resolvedIds);
   }
 
-  private extractSignificantNamePart(name: string): string {
-    const stopWords = new Set([
-      'cuaderno',
-      'cuadernos',
-      'libreta',
-      'libretas',
-      'poster',
-      'posters',
-      'de',
-      'el',
-      'la',
-      'los',
-      'las',
-      'un',
-      'una',
-      'para',
-      'con',
-      'del',
-    ]);
-
-    // Limpiar acentos y pasar a minúsculas
-    const cleanName = name
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-
-    // Extraer palabras, ignorar stopwords, y tomar la primera que quede
-    const words = cleanName
-      .split(/\s+/)
-      .map((w) => w.replace(/[^a-z0-9]/g, ''))
-      .filter((w) => w.length > 0);
-    const significantWords = words.filter((w) => !stopWords.has(w));
-
-    const targetWord =
-      significantWords.length > 0 ? significantWords[0] : words[0] || 'XXX';
-
-    return targetWord.substring(0, 3).toUpperCase().padEnd(3, 'X');
+  async generateSlug(name: string): Promise<string> {
+    const baseSlug = slugify(name, { lower: true, strict: true });
+    let slug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await this.prisma.product.findUnique({
+        where: { slug },
+      });
+      if (!existing) break;
+      counter++;
+      slug = `${baseSlug}-${counter}`;
+    }
+    return slug;
   }
 
-  async suggestSku(type: import('@prisma/client').ProductType, name: string) {
+  private getInitials(name: string): string {
+    const words = name
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0);
+    const initials = words.map((w) => w[0].toUpperCase()).join('');
+    return initials || 'UNK';
+  }
+
+  async generateSku(
+    type: import('@prisma/client').ProductType,
+    name: string,
+    variantDetails: any,
+  ): Promise<string> {
     let prefix = 'PRD';
-    if (type === 'NOTEBOOK') prefix = 'NB';
-    else if (type === 'NOTEPAD') prefix = 'NP';
-    else if (type === 'POSTER') prefix = 'PT';
+    if (type === 'NOTEBOOK') prefix = 'NOTE';
+    else if (type === 'NOTEPAD') prefix = 'PAD';
+    else if (type === 'POSTER') prefix = 'POS';
 
-    const finalNamePart = this.extractSignificantNamePart(name);
+    const initials = this.getInitials(name);
 
+    let attrStr = '';
+    if (variantDetails) {
+      if (type === 'NOTEBOOK' || type === 'NOTEPAD') {
+        const pageCount = variantDetails.pageCount?.replace('PAGES_', '') || '';
+        const paperType = variantDetails.paperType || '';
+        attrStr = `-${pageCount}-${paperType}`;
+      } else if (type === 'POSTER') {
+        const size = variantDetails.size || '';
+        attrStr = `-${size}`;
+      }
+    }
+
+    // Clean up double dashes in case attributes are missing
+    const baseSku = `${prefix}-${initials}${attrStr}`
+      .replace(/-+/g, '-')
+      .replace(/-$/, '');
+
+    let sku = baseSku;
     let isUnique = false;
-    let sku = '';
-
     while (!isUnique) {
-      const uniquePart = Math.random()
-        .toString(36)
-        .substring(2, 6)
-        .toUpperCase();
-      sku = `${prefix}-${finalNamePart}-${uniquePart}`;
-
       const existing = await this.prisma.productVariant.findUnique({
         where: { sku },
       });
       if (!existing) {
         isUnique = true;
+      } else {
+        const randomHash = Math.random()
+          .toString(36)
+          .substring(2, 6)
+          .toUpperCase();
+        sku = `${baseSku}-${randomHash}`;
       }
     }
 
-    return { sku };
+    return sku;
   }
 
-  private validateSkuStructure(
-    type: import('@prisma/client').ProductType,
-    name: string,
-    sku: string,
-  ) {
-    let prefix = 'PRD';
-    if (type === 'NOTEBOOK') prefix = 'NB';
-    else if (type === 'NOTEPAD') prefix = 'NP';
-    else if (type === 'POSTER') prefix = 'PT';
+  private extractVariantDetails(type: string, variant: any) {
+    if (type === 'NOTEBOOK') return variant.notebookVariantDetails;
+    if (type === 'NOTEPAD') return variant.notepadVariantDetails;
+    if (type === 'POSTER') return variant.posterVariantDetails;
+    return undefined;
+  }
 
-    const finalNamePart = this.extractSignificantNamePart(name);
-    const expectedPrefix = `${prefix}-${finalNamePart}-`;
-
-    if (!sku.startsWith(expectedPrefix)) {
-      throw new BadRequestException(
-        `El SKU de la variante (${sku}) es inválido. Debe comenzar con el prefijo estructurado: ${expectedPrefix}`,
-      );
-    }
+  private extractProductDetails(type: string, dto: CreateProductDto) {
+    if (type === 'NOTEBOOK') return dto.notebookDetails;
+    if (type === 'NOTEPAD') return dto.notepadDetails;
+    if (type === 'POSTER') return dto.posterDetails;
+    return undefined;
   }
 
   async create(dto: CreateProductDto) {
     this.validateProductDetails(dto);
 
-    // Validar la estructura de todos los SKUs antes de iniciar la transacción
-    for (const v of dto.variants) {
-      this.validateSkuStructure(dto.type, dto.name, v.sku);
-    }
-
-    // Resolver etiquetas (padres automáticos)
+    const slug = await this.generateSlug(dto.name);
     const resolvedTagIds = await this.resolveTagAncestors(dto.tagIds || []);
+
+    const productDetails = this.extractProductDetails(dto.type, dto);
 
     try {
       const product = await this.prisma.$transaction(async (tx) => {
         const imagesData = dto.imageUrls?.map((url) => ({ url })) || [];
         const tagsData = resolvedTagIds.map((id) => ({ id }));
 
-        // Calcular precio base y max iniciales
-        const activeVariants = dto.variants.filter((v) => v.isActive !== false);
-        const prices = activeVariants.map((v) => v.discountPrice ?? v.price);
-        const basePrice = prices.length > 0 ? Math.min(...prices) : 0;
-        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-
         const createdProduct = await tx.product.create({
           data: {
             name: dto.name,
-            slug: dto.slug,
+            slug: slug,
             description: dto.description,
             type: dto.type,
             isFeatured: dto.isFeatured ?? false,
-            basePrice,
-            maxPrice,
+            isActive: false, // Inactivo por defecto hasta que tenga variantes y se publique
+            basePrice: 0,
+            maxPrice: 0,
             images: { create: imagesData },
             tags: { connect: tagsData },
-            // Crear Detalles Base
-            notebookDetails:
-              dto.type === 'NOTEBOOK' && dto.notebookDetails
-                ? { create: dto.notebookDetails }
-                : undefined,
-            notepadDetails:
-              dto.type === 'NOTEPAD' && dto.notepadDetails
-                ? { create: dto.notepadDetails }
-                : undefined,
-            posterDetails:
-              dto.type === 'POSTER' && dto.posterDetails
-                ? { create: dto.posterDetails }
-                : undefined,
-            // Crear Variantes
-            variants: {
-              create: dto.variants.map((v) => ({
-                sku: v.sku,
-                price: v.price,
-                discountPrice: v.discountPrice,
-                stock: v.stock ?? 0,
-                isActive: v.isActive ?? true,
-                notebookVariantDetails:
-                  dto.type === 'NOTEBOOK' && v.notebookVariantDetails
-                    ? { create: v.notebookVariantDetails }
-                    : undefined,
-                notepadVariantDetails:
-                  dto.type === 'NOTEPAD' && v.notepadVariantDetails
-                    ? { create: v.notepadVariantDetails }
-                    : undefined,
-                posterVariantDetails:
-                  dto.type === 'POSTER' && v.posterVariantDetails
-                    ? { create: v.posterVariantDetails }
-                    : undefined,
-              })),
-            },
+            attributes: productDetails
+              ? (productDetails as any)
+              : Prisma.JsonNull,
           },
+          omit: { id: true },
           include: {
-            variants: {
-              include: {
-                notebookVariantDetails: true,
-                notepadVariantDetails: true,
-                posterVariantDetails: true,
-              },
-            },
-            notebookDetails: true,
-            notepadDetails: true,
-            posterDetails: true,
+            variants: { omit: { id: true, productId: true } },
+            images: { omit: { id: true, productId: true } },
+            tags: { omit: { id: true, parentId: true } },
           },
         });
 
@@ -257,39 +210,20 @@ export class ProductsService {
   }
 
   private validateProductDetails(dto: CreateProductDto) {
-    this.validateBaseDetails(dto);
-    this.validateVariantDetails(dto);
-  }
-
-  private validateBaseDetails(dto: CreateProductDto) {
     if (dto.type === 'NOTEBOOK' && !dto.notebookDetails) {
-      throw new BadRequestException('Faltan los detalles base de Notebook');
+      throw new BadRequestException(
+        'Faltan los atributos base de Notebook (notebookDetails)',
+      );
     }
     if (dto.type === 'NOTEPAD' && !dto.notepadDetails) {
-      throw new BadRequestException('Faltan los detalles base de Notepad');
+      throw new BadRequestException(
+        'Faltan los atributos base de Notepad (notepadDetails)',
+      );
     }
     if (dto.type === 'POSTER' && !dto.posterDetails) {
-      throw new BadRequestException('Faltan los detalles base de Poster');
-    }
-  }
-
-  private validateVariantDetails(dto: CreateProductDto) {
-    for (const [index, variant] of dto.variants.entries()) {
-      if (dto.type === 'NOTEBOOK' && !variant.notebookVariantDetails) {
-        throw new BadRequestException(
-          `La variante ${index} no tiene los detalles específicos de Notebook`,
-        );
-      }
-      if (dto.type === 'NOTEPAD' && !variant.notepadVariantDetails) {
-        throw new BadRequestException(
-          `La variante ${index} no tiene los detalles específicos de Notepad`,
-        );
-      }
-      if (dto.type === 'POSTER' && !variant.posterVariantDetails) {
-        throw new BadRequestException(
-          `La variante ${index} no tiene los detalles específicos de Poster`,
-        );
-      }
+      throw new BadRequestException(
+        'Faltan los atributos base de Poster (posterDetails)',
+      );
     }
   }
 
@@ -313,22 +247,27 @@ export class ProductsService {
     const { pageCount, paperType, posterSize } = filters;
     if (!pageCount && !paperType && !posterSize) return;
 
-    const variantFilters: Prisma.ProductVariantWhereInput = {};
-    if (pageCount || paperType) {
-      variantFilters.OR = [
-        {
-          notebookVariantDetails: { pageCount, paperType },
-        },
-        {
-          notepadVariantDetails: { pageCount, paperType },
-        },
-      ];
+    const variantFilters: Prisma.ProductVariantWhereInput = { AND: [] };
+
+    if (pageCount) {
+      (variantFilters.AND as any[]).push({
+        attributes: { path: ['pageCount'], equals: pageCount },
+      });
+    }
+    if (paperType) {
+      (variantFilters.AND as any[]).push({
+        attributes: { path: ['paperType'], equals: paperType },
+      });
     }
     if (posterSize) {
-      variantFilters.posterVariantDetails = { size: posterSize };
+      (variantFilters.AND as any[]).push({
+        attributes: { path: ['size'], equals: posterSize },
+      });
     }
 
-    whereClause.variants = { some: variantFilters };
+    if ((variantFilters.AND as any[]).length > 0) {
+      whereClause.variants = { some: variantFilters };
+    }
   }
 
   private applySearchTokens(
@@ -387,7 +326,6 @@ export class ProductsService {
     }
 
     if (onSale) {
-      // Combina con otros filtros de variantes si ya existen
       whereClause.variants = {
         ...whereClause.variants,
         some: {
@@ -431,19 +369,13 @@ export class ProductsService {
         skip,
         take: limit,
         orderBy: orderByClause,
+        omit: { id: true },
         include: {
-          images: true,
-          tags: true,
-          notebookDetails: true,
-          notepadDetails: true,
-          posterDetails: true,
+          images: { omit: { id: true, productId: true } },
+          tags: { omit: { id: true, parentId: true } },
           variants: {
             where: { isActive: true },
-            include: {
-              notebookVariantDetails: true,
-              notepadVariantDetails: true,
-              posterVariantDetails: true,
-            },
+            omit: { id: true, productId: true },
           },
         },
       }),
@@ -475,19 +407,11 @@ export class ProductsService {
         skip,
         take: limit,
         orderBy: orderByClause,
+        omit: { id: true },
         include: {
-          images: true,
-          tags: true,
-          notebookDetails: true,
-          notepadDetails: true,
-          posterDetails: true,
-          variants: {
-            include: {
-              notebookVariantDetails: true,
-              notepadVariantDetails: true,
-              posterVariantDetails: true,
-            },
-          },
+          images: { omit: { id: true, productId: true } },
+          tags: { omit: { id: true, parentId: true } },
+          variants: { omit: { id: true, productId: true } },
         },
       }),
     ]);
@@ -507,19 +431,13 @@ export class ProductsService {
   async findOne(slug: string) {
     const product = await this.prisma.product.findFirst({
       where: { slug, isActive: true },
+      omit: { id: true },
       include: {
-        images: true,
-        tags: true,
-        notebookDetails: true,
-        notepadDetails: true,
-        posterDetails: true,
+        images: { omit: { id: true, productId: true } },
+        tags: { omit: { id: true, parentId: true } },
         variants: {
           where: { isActive: true },
-          include: {
-            notebookVariantDetails: true,
-            notepadVariantDetails: true,
-            posterVariantDetails: true,
-          },
+          omit: { id: true, productId: true },
         },
       },
     });
@@ -532,63 +450,108 @@ export class ProductsService {
     return product;
   }
 
-  async findOneAdmin(id: string) {
+  async findOneAdmin(slug: string) {
     const product = await this.prisma.product.findUnique({
-      where: { id },
+      where: { slug },
+      omit: { id: true },
       include: {
-        images: true,
-        tags: true,
-        notebookDetails: true,
-        notepadDetails: true,
-        posterDetails: true,
-        variants: {
-          include: {
-            notebookVariantDetails: true,
-            notepadVariantDetails: true,
-            posterVariantDetails: true,
-          },
-        },
+        images: { omit: { id: true, productId: true } },
+        tags: { omit: { id: true, parentId: true } },
+        variants: { omit: { id: true, productId: true } },
       },
     });
 
     if (!product) {
-      throw new NotFoundException(`Producto con ID ${id} no encontrado`);
+      throw new NotFoundException(`Producto con slug ${slug} no encontrado`);
     }
     return product;
   }
 
-  async softDelete(id: string) {
-    return this.prisma.product.update({
-      where: { id },
+  async deactivate(slug: string) {
+    const deactivatedProduct = await this.prisma.product.update({
+      where: { slug },
       data: { isActive: false },
+      omit: { id: true },
     });
+
+    return {
+      message: 'Producto desactivado correctamente',
+      product: deactivatedProduct,
+    };
   }
 
-  async remove(id: string) {
+  async activate(slug: string) {
     const product = await this.prisma.product.findUnique({
-      where: { id },
+      where: { slug },
+      include: { variants: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Producto con slug ${slug} no encontrado`);
+    }
+
+    if (product.variants.length === 0) {
+      throw new BadRequestException(
+        'No se puede publicar un producto sin variantes. Añade al menos una variante primero.',
+      );
+    }
+
+    const activatedProduct = await this.prisma.product.update({
+      where: { slug },
+      data: { isActive: true },
+      omit: { id: true },
+    });
+
+    return {
+      message: 'Producto activado correctamente',
+      product: activatedProduct,
+    };
+  }
+
+  async remove(slug: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { slug },
       include: { images: true },
     });
 
     if (!product) {
-      throw new NotFoundException(`Producto con ID ${id} no encontrado`);
+      throw new NotFoundException(`Producto con slug ${slug} no encontrado`);
     }
 
-    // 1. Eliminar imágenes de Supabase
     for (const image of product.images) {
       await this.uploadsService.deleteImageFromSupabase(image.url);
     }
 
-    // 2. Eliminar el producto de la DB (Cascada elimina variantes y detalles)
-    await this.prisma.product.delete({
-      where: { id },
+    const deletedProduct = await this.prisma.product.delete({
+      where: { slug },
+      omit: { id: true },
     });
+
+    return {
+      message: 'Producto eliminado permanentemente',
+      product: deletedProduct,
+    };
   }
 
   async updateBaseProduct(
-    id: string,
+    slug: string,
     dto: import('./dto/update-product.dto').UpdateProductDto,
   ) {
+    const product = await this.prisma.product.findUnique({ where: { slug } });
+    if (!product) {
+      throw new NotFoundException(`Producto con slug ${slug} no encontrado`);
+    }
+    const id = product.id;
+
+    // For UpdateProductDto we use the baseDetails from explicit dto types if provided.
+    // However, UpdateProductDto in this refactor might just rely on base fields.
+    // We didn't add explicit notebookDetails to UpdateProductDto but it inherits from PartialType(OmitType(CreateProductDto, ...))
+    // So it does have notebookDetails, etc. Let's extract them.
+    const productDetails = this.extractProductDetails(
+      (dto as any).type || '',
+      dto as any,
+    );
+
     const {
       imageUrls,
       tagIds,
@@ -596,14 +559,13 @@ export class ProductsService {
       notepadDetails,
       posterDetails,
       ...baseData
-    } = dto;
+    } = dto as any;
 
     let resolvedTagIds: string[] | undefined;
     if (tagIds !== undefined) {
       resolvedTagIds = await this.resolveTagAncestors(tagIds);
     }
 
-    // Obtener imágenes antiguas para no dejarlas huérfanas en Supabase
     let oldImages: { url: string }[] = [];
     if (imageUrls !== undefined) {
       oldImages = await this.prisma.productImage.findMany({
@@ -614,29 +576,21 @@ export class ProductsService {
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
-        // 1. Update basic product data
         const updateData: Prisma.ProductUpdateInput = {
           ...baseData,
         };
 
-        // 2. Handle tags if provided
         if (resolvedTagIds !== undefined) {
           updateData.tags = {
             set: resolvedTagIds.map((id) => ({ id })),
           };
         }
 
-        // 3. Handle images if imageUrls is provided
         if (imageUrls !== undefined) {
-          // Delete all existing images
           await tx.productImage.deleteMany({ where: { productId: id } });
-
-          // Add new ones
           updateData.images = {
-            create: imageUrls.map((url) => ({ url })),
+            create: imageUrls.map((url: string) => ({ url })),
           };
-
-          // Remove from pending uploads
           if (imageUrls.length > 0) {
             await tx.pendingUpload.deleteMany({
               where: { url: { in: imageUrls } },
@@ -644,27 +598,23 @@ export class ProductsService {
           }
         }
 
-        // 4. Update product and its details
-        if (notebookDetails)
-          updateData.notebookDetails = { update: notebookDetails };
-        if (notepadDetails)
-          updateData.notepadDetails = { update: notepadDetails };
-        if (posterDetails) updateData.posterDetails = { update: posterDetails };
+        if (productDetails !== undefined) {
+          updateData.attributes =
+            productDetails === null ? Prisma.JsonNull : (productDetails as any);
+        }
 
         return tx.product.update({
           where: { id },
           data: updateData,
+          omit: { id: true },
           include: {
-            tags: true,
-            images: true,
-            notebookDetails: true,
-            notepadDetails: true,
-            posterDetails: true,
+            tags: { omit: { id: true, parentId: true } },
+            images: { omit: { id: true, productId: true } },
+            variants: { omit: { id: true, productId: true } },
           },
         });
       });
 
-      // Limpiar imágenes eliminadas de Supabase de forma asíncrona
       if (imageUrls !== undefined) {
         const newUrls = new Set(imageUrls);
         const imagesToDelete = oldImages.filter((img) => !newUrls.has(img.url));
@@ -695,7 +645,9 @@ export class ProductsService {
       select: { price: true, discountPrice: true },
     });
 
-    const prices = variants.map((v) => v.discountPrice ?? v.price);
+    const prices = variants.map((v) =>
+      v.discountPrice && v.discountPrice > 0 ? v.discountPrice : v.price,
+    );
     const basePrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
@@ -706,45 +658,58 @@ export class ProductsService {
   }
 
   async addVariant(
-    productId: string,
+    slug: string,
     dto: import('./dto/create-product.dto').CreateProductVariantDto,
   ) {
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      select: { type: true, name: true },
+      where: { slug },
+      select: { id: true, type: true, name: true },
     });
 
     if (!product) {
-      throw new NotFoundException(`Producto con ID ${productId} no encontrado`);
+      throw new NotFoundException(`Producto con slug ${slug} no encontrado`);
+    }
+    const productId = product.id;
+
+    const variantDetails = this.extractVariantDetails(product.type, dto);
+
+    // Validate details manually for addVariant
+    if (product.type === 'NOTEBOOK' && !variantDetails) {
+      throw new BadRequestException(
+        `La variante no tiene notebookVariantDetails`,
+      );
+    }
+    if (product.type === 'NOTEPAD' && !variantDetails) {
+      throw new BadRequestException(
+        `La variante no tiene notepadVariantDetails`,
+      );
+    }
+    if (product.type === 'POSTER' && !variantDetails) {
+      throw new BadRequestException(
+        `La variante no tiene posterVariantDetails`,
+      );
     }
 
-    this.validateSkuStructure(product.type, product.name, dto.sku);
+    const sku = await this.generateSku(
+      product.type,
+      product.name,
+      variantDetails,
+    );
 
     const data: Prisma.ProductVariantUncheckedCreateInput = {
       productId,
-      sku: dto.sku,
+      sku: sku,
       price: dto.price,
       discountPrice: dto.discountPrice,
       stock: dto.stock ?? 0,
-      isActive: dto.isActive ?? true,
+      isActive: false, // Las variantes nacen como borrador por defecto
+      attributes: variantDetails ? (variantDetails as any) : Prisma.JsonNull,
     };
-
-    if (dto.notebookVariantDetails) {
-      data.notebookVariantDetails = { create: dto.notebookVariantDetails };
-    } else if (dto.notepadVariantDetails) {
-      data.notepadVariantDetails = { create: dto.notepadVariantDetails };
-    } else if (dto.posterVariantDetails) {
-      data.posterVariantDetails = { create: dto.posterVariantDetails };
-    }
 
     try {
       const variant = await this.prisma.productVariant.create({
         data,
-        include: {
-          notebookVariantDetails: true,
-          notepadVariantDetails: true,
-          posterVariantDetails: true,
-        },
+        omit: { id: true, productId: true },
       });
       await this.recalculateProductPrices(productId);
       return variant;
@@ -760,64 +725,166 @@ export class ProductsService {
   }
 
   async updateVariant(
-    variantId: string,
+    sku: string,
     dto: import('./dto/update-variant.dto').UpdateVariantDto,
   ) {
+    // Determine type by looking at existing variant -> product
+    const existingVariant = await this.prisma.productVariant.findUnique({
+      where: { sku },
+      include: { product: true },
+    });
+
+    if (!existingVariant) {
+      throw new NotFoundException(`Variante con SKU ${sku} no encontrada`);
+    }
+
+    const variantDetails = this.extractVariantDetails(
+      existingVariant.product.type,
+      dto,
+    );
+
+    // Removing the explicit structured dtos from baseData to just save them into attributes
     const {
       notebookVariantDetails,
       notepadVariantDetails,
       posterVariantDetails,
       ...baseData
-    } = dto;
+    } = dto as any;
 
     const updateData: Prisma.ProductVariantUpdateInput = {
       ...baseData,
     };
 
-    if (notebookVariantDetails) {
-      updateData.notebookVariantDetails = { update: notebookVariantDetails };
-    } else if (notepadVariantDetails) {
-      updateData.notepadVariantDetails = { update: notepadVariantDetails };
-    } else if (posterVariantDetails) {
-      updateData.posterVariantDetails = { update: posterVariantDetails };
+    if (variantDetails !== undefined) {
+      updateData.attributes =
+        variantDetails === null ? Prisma.JsonNull : (variantDetails as any);
     }
 
     try {
       const variant = await this.prisma.productVariant.update({
-        where: { id: variantId },
+        where: { sku },
         data: updateData,
-        include: {
-          notebookVariantDetails: true,
-          notepadVariantDetails: true,
-          posterVariantDetails: true,
-        },
+        omit: { id: true, productId: true },
       });
-      await this.recalculateProductPrices(variant.productId);
+      await this.recalculateProductPrices(existingVariant.productId);
       return variant;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('El SKU ingresado ya está en uso');
-      }
       throw error;
     }
   }
 
-  async removeVariant(variantId: string) {
+  async removeVariant(sku: string) {
     const variant = await this.prisma.productVariant.findUnique({
-      where: { id: variantId },
+      where: { sku },
     });
 
     if (!variant) {
-      throw new NotFoundException(`Variante con ID ${variantId} no encontrada`);
+      throw new NotFoundException(`Variante con SKU ${sku} no encontrada`);
     }
 
-    await this.prisma.productVariant.delete({
-      where: { id: variantId },
+    const deletedVariant = await this.prisma.productVariant.delete({
+      where: { sku },
+      omit: { id: true, productId: true },
     });
 
     await this.recalculateProductPrices(variant.productId);
+
+    // Desactivación automática si ya no quedan variantes
+    const remainingVariants = await this.prisma.productVariant.count({
+      where: { productId: variant.productId },
+    });
+
+    if (remainingVariants === 0) {
+      await this.prisma.product.update({
+        where: { id: variant.productId },
+        data: { isActive: false },
+      });
+      this.logger.log(
+        `Producto ${variant.productId} desactivado automáticamente por quedarse sin variantes.`,
+      );
+    }
+
+    return {
+      message: 'Variante eliminada permanentemente',
+      variant: deletedVariant,
+    };
+  }
+
+  async activateVariant(sku: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { sku },
+    });
+
+    if (!variant) {
+      throw new NotFoundException(`Variante con SKU ${sku} no encontrada`);
+    }
+
+    const activatedVariant = await this.prisma.productVariant.update({
+      where: { sku },
+      data: { isActive: true },
+      omit: { id: true, productId: true },
+    });
+
+    await this.recalculateProductPrices(variant.productId);
+
+    return {
+      message: 'Variante activada correctamente',
+      variant: activatedVariant,
+    };
+  }
+
+  async deactivateVariant(sku: string) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { sku },
+    });
+
+    if (!variant) {
+      throw new NotFoundException(`Variante con SKU ${sku} no encontrada`);
+    }
+
+    const deactivatedVariant = await this.prisma.productVariant.update({
+      where: { sku },
+      data: { isActive: false },
+      omit: { id: true, productId: true },
+    });
+
+    await this.recalculateProductPrices(variant.productId);
+
+    // Desactivación automática del padre si ya no quedan variantes activas
+    const remainingActiveVariants = await this.prisma.productVariant.count({
+      where: { productId: variant.productId, isActive: true },
+    });
+
+    if (remainingActiveVariants === 0) {
+      await this.prisma.product.update({
+        where: { id: variant.productId },
+        data: { isActive: false },
+      });
+      this.logger.log(
+        `Producto ${variant.productId} desactivado automáticamente por quedarse sin variantes activas.`,
+      );
+    }
+
+    return {
+      message: 'Variante desactivada correctamente',
+      variant: deactivatedVariant,
+    };
+  }
+
+  async updateStock(sku: string, stock: number) {
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { sku },
+    });
+
+    if (!variant) {
+      throw new NotFoundException(`Variante con SKU ${sku} no encontrada`);
+    }
+
+    const updated = await this.prisma.productVariant.update({
+      where: { sku },
+      data: { stock },
+      omit: { id: true, productId: true },
+    });
+    return updated;
   }
 }

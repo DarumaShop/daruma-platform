@@ -8,7 +8,7 @@ import {
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
-@ApiTags('Dashboard')
+@ApiTags('Dashboard (Admin)')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('admin/dashboard')
@@ -17,8 +17,7 @@ export class DashboardController {
 
   @Get('stats')
   @ApiOperation({
-    summary:
-      '(ADMIN) Obtiene las métricas principales para el panel de control',
+    summary: '(ADMIN) Obtiene las métricas generales del panel de control.',
   })
   @ApiResponse({ status: 200, description: 'Métricas obtenidas correctamente' })
   getStats() {

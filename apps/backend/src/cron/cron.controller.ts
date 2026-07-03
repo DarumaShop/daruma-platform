@@ -9,7 +9,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-@ApiTags('Crons')
+@ApiTags('Crons (Admin)')
 @Controller('crons')
 export class CronController {
   constructor(
@@ -19,13 +19,13 @@ export class CronController {
 
   @Get('garbage-collection')
   @ApiOperation({
-    summary: 'Ejecuta el recolector de basura de imágenes huérfanas',
+    summary: '(ADMIN) Ejecuta el recolector de basura de imágenes huérfanas.',
     description: 'Endpoint reservado para Vercel Crons',
   })
   @ApiResponse({ status: 200, description: 'Recolección ejecutada' })
   @ApiResponse({ status: 401, description: 'Acceso no autorizado' })
   @ApiBearerAuth()
-  @ApiTags('Crons')
+  @ApiTags('Crons (Admin)')
   async triggerGarbageCollection(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
     const cronSecret = this.configService.get<string>('CRON_SECRET')?.trim();

@@ -18,9 +18,7 @@ model Product {
 
   variants ProductVariant[]
 
-  notebookDetails NotebookDetails?
-  notepadDetails  NotepadDetails?
-  posterDetails   PosterDetails?
+  attributes Json?
 }
 
 model ProductVariant {
@@ -34,9 +32,7 @@ model ProductVariant {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  notebookVariantDetails NotebookVariantDetails?
-  notepadVariantDetails  NotepadVariantDetails?
-  posterVariantDetails   PosterVariantDetails?
+  attributes Json?
 }
 
 model ProductImage {
@@ -45,73 +41,6 @@ model ProductImage {
 
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-model NotebookDetails {
-  productId String  @id
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  length Float
-  width  Float
-  height Float
-}
-
-model NotepadDetails {
-  productId String  @id
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  length Float
-  width  Float
-  height Float
-}
-
-model PosterDetails {
-  productId String  @id
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  width  Float
-  height Float
-}
-
-model NotebookVariantDetails {
-  variantId String         @id
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  pageCount PageCount
-  paperType PaperType
-}
-
-model NotepadVariantDetails {
-  variantId String         @id
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  pageCount PageCount
-  paperType PaperType
-}
-
-model PosterVariantDetails {
-  variantId String         @id
-  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  size PosterSize
-}
-
-enum PageCount {
-  PAGES_60
-  PAGES_80
-  PAGES_100
-}
-
-enum PaperType {
-  GRID
-  LINED
-  BLANK
-}
-
-enum PosterSize {
-  SMALL
-  MEDIUM
-  LARGE
 }
 
 enum ProductType {

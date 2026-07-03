@@ -22,7 +22,7 @@ import { UploadsService } from './uploads.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { UploadImageDto } from './dto/upload-image.dto';
 
-@ApiTags('Uploads')
+@ApiTags('Uploads (Admin)')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('admin/uploads')
@@ -30,9 +30,7 @@ export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}
 
   @Post('image')
-  @ApiOperation({
-    summary: '(ADMIN) Sube y procesa una imagen para un producto',
-  })
+  @ApiOperation({ summary: '(ADMIN) Sube y procesa una imagen.' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description:
