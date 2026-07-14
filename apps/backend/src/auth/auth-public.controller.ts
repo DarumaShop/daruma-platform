@@ -1,6 +1,8 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
+import { LoginUserService } from './services/login-user.service';
+import { RegisterUserService } from './services/register-user.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -8,7 +10,11 @@ import { RefreshDto } from './dto/refresh.dto';
 @ApiTags('Authentication (Public)')
 @Controller('auth')
 export class AuthPublicController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly loginUserService: LoginUserService,
+    private readonly registerUserService: RegisterUserService,
+    private readonly refreshTokenService: RefreshTokenService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -25,7 +31,7 @@ export class AuthPublicController {
   })
   @ApiResponse({ status: 401, description: 'Credenciales incorrectas.' })
   async login(@Body() body: LoginDto) {
-    return this.authService.login(body);
+    return this.loginUserService.login(body);
   }
 
   @Post('register')
@@ -44,7 +50,7 @@ export class AuthPublicController {
     description: 'El correo electrónico ya está en uso.',
   })
   async register(@Body() body: RegisterDto) {
-    return this.authService.register(body);
+    return this.registerUserService.register(body);
   }
 
   @Post('refresh')
@@ -58,6 +64,6 @@ export class AuthPublicController {
     description: 'Refresh token inválido o expirado',
   })
   async refresh(@Body() body: RefreshDto) {
-    return this.authService.refreshToken(body.refreshToken);
+    return this.refreshTokenService.refreshToken(body.refreshToken);
   }
 }

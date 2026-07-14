@@ -5,7 +5,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { DashboardService } from './dashboard.service';
+import { GetDashboardStatsService } from './services/get-dashboard-stats.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('Dashboard (Admin)')
@@ -13,7 +13,9 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('admin/dashboard')
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(
+    private readonly getDashboardStatsService: GetDashboardStatsService,
+  ) {}
 
   @Get('stats')
   @ApiOperation({
@@ -21,6 +23,6 @@ export class DashboardController {
   })
   @ApiResponse({ status: 200, description: 'Métricas obtenidas correctamente' })
   getStats() {
-    return this.dashboardService.getStats();
+    return this.getDashboardStatsService.getStats();
   }
 }

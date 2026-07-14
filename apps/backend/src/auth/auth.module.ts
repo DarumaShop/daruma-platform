@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { AuthService } from './auth.service';
+import { LoginUserService } from './services/login-user.service';
+import { RegisterUserService } from './services/register-user.service';
+import { RefreshTokenService } from './services/refresh-token.service';
+import { LogoutUserService } from './services/logout-user.service';
+import { GenerateInviteService } from './services/generate-invite.service';
 import { AuthPublicController } from './auth-public.controller';
 import { AuthAdminController } from './auth-admin.controller';
 import { UsersModule } from '../users/users.module';
@@ -22,6 +26,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthPublicController, AuthAdminController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    LoginUserService,
+    RegisterUserService,
+    RefreshTokenService,
+    LogoutUserService,
+    GenerateInviteService,
+    JwtStrategy,
+  ],
 })
 export class AuthModule {}

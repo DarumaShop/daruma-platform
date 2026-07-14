@@ -1,11 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { TagsService } from './tags.service';
+import { GetTagsService } from './services/get-tags.service';
 
 @ApiTags('Tags (Public)')
 @Controller('public/tags')
 export class TagsPublicController {
-  constructor(private readonly tagsService: TagsService) {}
+  constructor(private readonly getTagsService: GetTagsService) {}
 
   @Get()
   @ApiOperation({
@@ -22,7 +22,7 @@ export class TagsPublicController {
     description: 'Término de búsqueda opcional',
   })
   findAll(@Query('search') search?: string) {
-    return this.tagsService.findAll(search);
+    return this.getTagsService.findAll(search);
   }
 
   @Get(':slug')
@@ -39,6 +39,6 @@ export class TagsPublicController {
   })
   findOne(@Param('slug') slug: string, @Query('tree') tree?: string) {
     const withTree = tree === 'true';
-    return this.tagsService.findOne(slug, withTree);
+    return this.getTagsService.findOne(slug, withTree);
   }
 }

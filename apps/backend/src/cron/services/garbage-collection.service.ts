@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { UploadsService } from '../uploads/uploads.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { DeleteImageService } from '../../uploads/services/delete-image.service';
 
 @Injectable()
 export class GarbageCollectorService {
@@ -9,7 +9,7 @@ export class GarbageCollectorService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly uploadsService: UploadsService,
+    private readonly deleteImageService: DeleteImageService,
   ) {}
 
   async handleOrphanedImages() {
@@ -36,7 +36,7 @@ export class GarbageCollectorService {
       );
 
       for (const upload of orphanedUploads) {
-        await this.uploadsService.deleteImageFromSupabase(upload.url);
+        await this.deleteImageService.deleteImageFromSupabase(upload.url);
 
         await this.prisma.pendingUpload.delete({
           where: { id: upload.id },

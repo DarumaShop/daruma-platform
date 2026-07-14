@@ -18,7 +18,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { UploadsService } from './uploads.service';
+import { UploadImageService } from './services/upload-image.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { UploadImageDto } from './dto/upload-image.dto';
 
@@ -27,7 +27,7 @@ import { UploadImageDto } from './dto/upload-image.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('admin/uploads')
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly uploadImageService: UploadImageService) {}
 
   @Post('image')
   @ApiOperation({ summary: '(ADMIN) Sube y procesa una imagen.' })
@@ -77,7 +77,7 @@ export class UploadsController {
       fit: options.fit,
     };
 
-    const publicUrl = await this.uploadsService.processAndUploadImage(
+    const publicUrl = await this.uploadImageService.processAndUploadImage(
       file,
       processOptions,
     );

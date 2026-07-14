@@ -5,7 +5,8 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
+import { GenerateInviteService } from './services/generate-invite.service';
+import { LogoutUserService } from './services/logout-user.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('Authentication (Admin)')
@@ -13,7 +14,10 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @Controller('auth')
 export class AuthAdminController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly generateInviteService: GenerateInviteService,
+    private readonly logoutUserService: LogoutUserService,
+  ) {}
 
   @Get('invite')
   @ApiOperation({
@@ -31,7 +35,7 @@ export class AuthAdminController {
       'Acceso denegado. Se requiere un Access Token válido de un administrador.',
   })
   generateInvite() {
-    const token = this.authService.generateInviteToken();
+    const token = this.generateInviteService.generateInviteToken();
     return { inviteToken: token };
   }
 
@@ -41,6 +45,6 @@ export class AuthAdminController {
   })
   @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente' })
   async logout(@Req() req: { user: { id: string } }) {
-    return this.authService.logout(req.user.id);
+    return this.logoutUserService.logout(req.user.id);
   }
 }

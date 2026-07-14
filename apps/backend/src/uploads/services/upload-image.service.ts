@@ -4,12 +4,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
 
-interface ProcessImageOptions {
+export interface ProcessImageOptions {
   targetWidth?: number;
   targetHeight?: number;
   cropX?: number;
@@ -20,8 +20,8 @@ interface ProcessImageOptions {
 }
 
 @Injectable()
-export class UploadsService {
-  private readonly logger = new Logger(UploadsService.name);
+export class UploadImageService {
+  private readonly logger = new Logger(UploadImageService.name);
   private readonly supabase: ReturnType<typeof createClient>;
 
   constructor(
@@ -127,30 +127,6 @@ export class UploadsService {
     } catch (error) {
       this.logger.error('Error procesando imagen', error);
       throw error;
-    }
-  }
-
-  async deleteImageFromSupabase(url: string): Promise<void> {
-    try {
-      const bucketName = 'products-images';
-      const urlParts = url.split(`/${bucketName}/`);
-      if (urlParts.length === 2) {
-        const filePath = urlParts[1];
-        const { error } = await this.supabase.storage
-          .from(bucketName)
-          .remove([filePath]);
-
-        if (error) {
-          this.logger.warn(
-            `No se pudo eliminar la imagen huérfana de Supabase: ${filePath}`,
-            error,
-          );
-        } else {
-          this.logger.log(`Imagen huérfana eliminada de Supabase: ${filePath}`);
-        }
-      }
-    } catch (error) {
-      this.logger.error('Error al intentar eliminar imagen de Supabase', error);
     }
   }
 }

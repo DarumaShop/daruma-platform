@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { GarbageCollectorService } from './garbage-collector.service';
+import { GarbageCollectorService } from './services/garbage-collection.service';
 import { UploadsModule } from '../uploads/uploads.module';
 
 import { CronController } from './cron.controller';

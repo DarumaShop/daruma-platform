@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { DashboardService } from './dashboard.service';
+import { GetDashboardStatsService } from './services/get-dashboard-stats.service';
 import { DashboardController } from './dashboard.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [DashboardService],
+  providers: [GetDashboardStatsService],
   controllers: [DashboardController],
 })
 export class DashboardModule {}

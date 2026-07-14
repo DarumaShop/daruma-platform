@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import { Controller, Get, Req, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GarbageCollectorService } from './garbage-collector.service';
+import { GarbageCollectorService } from './services/garbage-collection.service';
 import {
   ApiTags,
   ApiOperation,

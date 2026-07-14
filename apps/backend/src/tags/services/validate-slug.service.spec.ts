@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TagsService } from './tags.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { ValidateSlugService } from './validate-slug.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
-describe('TagsService', () => {
-  let service: TagsService;
+describe('ValidateSlugService', () => {
+  let service: ValidateSlugService;
   let prisma: PrismaService;
 
   const mockPrismaService = {
@@ -15,12 +15,12 @@ describe('TagsService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        TagsService,
+        ValidateSlugService,
         { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
-    service = module.get<TagsService>(TagsService);
+    service = module.get<ValidateSlugService>(ValidateSlugService);
     prisma = module.get<PrismaService>(PrismaService);
   });
 

@@ -15,7 +15,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ProductsService } from './products.service';
+import { CreateProductService } from './services/create-product.service';
+import { GetProductsService } from './services/get-products.service';
+import { UpdateProductService } from './services/update-product.service';
+import { DeleteProductService } from './services/delete-product.service';
+import { ToggleProductService } from './services/toggle-product.service';
+import { CreateVariantService } from './services/create-variant.service';
+import { UpdateVariantService } from './services/update-variant.service';
+import { ToggleVariantService } from './services/toggle-variant.service';
+import { DeleteVariantService } from './services/delete-variant.service';
 import {
   CreateProductDto,
   CreateProductVariantDto,
@@ -31,7 +39,17 @@ import { UpdateStockDto } from './dto/update-stock.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('admin/products')
 export class ProductsAdminController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly createProductService: CreateProductService,
+    private readonly getProductsService: GetProductsService,
+    private readonly updateProductService: UpdateProductService,
+    private readonly deleteProductService: DeleteProductService,
+    private readonly toggleProductService: ToggleProductService,
+    private readonly createVariantService: CreateVariantService,
+    private readonly updateVariantService: UpdateVariantService,
+    private readonly toggleVariantService: ToggleVariantService,
+    private readonly deleteVariantService: DeleteVariantService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -39,7 +57,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 201, description: 'Producto creado' })
   create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+    return this.createProductService.create(createProductDto);
   }
 
   @Get()
@@ -48,7 +66,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Catálogo administrativo paginado' })
   findAllAdmin(@Query() filters: GetProductsFilterDto) {
-    return this.productsService.findAllAdmin(filters);
+    return this.getProductsService.findAllAdmin(filters);
   }
 
   @Get(':slug')
@@ -57,7 +75,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Detalle del producto' })
   findOneAdmin(@Param('slug') slug: string) {
-    return this.productsService.findOneAdmin(slug);
+    return this.getProductsService.findOneAdmin(slug);
   }
 
   @Patch(':slug')
@@ -69,7 +87,7 @@ export class ProductsAdminController {
     @Param('slug') slug: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
-    return this.productsService.updateBaseProduct(slug, updateProductDto);
+    return this.updateProductService.updateBaseProduct(slug, updateProductDto);
   }
 
   @Delete(':slug')
@@ -81,7 +99,7 @@ export class ProductsAdminController {
     description: 'Producto eliminado permanentemente',
   })
   remove(@Param('slug') slug: string) {
-    return this.productsService.remove(slug);
+    return this.deleteProductService.remove(slug);
   }
 
   @Patch(':slug/deactivate')
@@ -90,7 +108,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Producto desactivado' })
   deactivate(@Param('slug') slug: string) {
-    return this.productsService.deactivate(slug);
+    return this.toggleProductService.deactivate(slug);
   }
 
   @Patch(':slug/activate')
@@ -99,7 +117,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Producto activado' })
   activate(@Param('slug') slug: string) {
-    return this.productsService.activate(slug);
+    return this.toggleProductService.activate(slug);
   }
 
   @Post(':slug/variants')
@@ -111,7 +129,7 @@ export class ProductsAdminController {
     @Param('slug') slug: string,
     @Body() createVariantDto: CreateProductVariantDto,
   ) {
-    return this.productsService.addVariant(slug, createVariantDto);
+    return this.createVariantService.addVariant(slug, createVariantDto);
   }
 
   @Patch('variants/:sku')
@@ -123,7 +141,7 @@ export class ProductsAdminController {
     @Param('sku') sku: string,
     @Body() updateVariantDto: UpdateVariantDto,
   ) {
-    return this.productsService.updateVariant(sku, updateVariantDto);
+    return this.updateVariantService.updateVariant(sku, updateVariantDto);
   }
 
   @Patch('variants/:sku/activate')
@@ -132,7 +150,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Variante activada' })
   activateVariant(@Param('sku') sku: string) {
-    return this.productsService.activateVariant(sku);
+    return this.toggleVariantService.activateVariant(sku);
   }
 
   @Patch('variants/:sku/deactivate')
@@ -141,7 +159,7 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Variante desactivada' })
   deactivateVariant(@Param('sku') sku: string) {
-    return this.productsService.deactivateVariant(sku);
+    return this.toggleVariantService.deactivateVariant(sku);
   }
 
   @Patch('variants/:sku/stock')
@@ -153,7 +171,7 @@ export class ProductsAdminController {
     @Param('sku') sku: string,
     @Body() updateStockDto: UpdateStockDto,
   ) {
-    return this.productsService.updateStock(sku, updateStockDto.stock);
+    return this.toggleVariantService.updateStock(sku, updateStockDto.stock);
   }
 
   @Delete('variants/:sku')
@@ -163,6 +181,6 @@ export class ProductsAdminController {
   })
   @ApiResponse({ status: 200, description: 'Variante eliminada' })
   removeVariant(@Param('sku') sku: string) {
-    return this.productsService.removeVariant(sku);
+    return this.deleteVariantService.removeVariant(sku);
   }
 }

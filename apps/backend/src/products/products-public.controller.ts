@@ -1,12 +1,12 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ProductsService } from './products.service';
+import { GetProductsService } from './services/get-products.service';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
 
 @ApiTags('Products (Public)')
 @Controller('public/products')
 export class ProductsPublicController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly getProductsService: GetProductsService) {}
 
   @Get()
   @ApiOperation({
@@ -14,7 +14,7 @@ export class ProductsPublicController {
   })
   @ApiResponse({ status: 200, description: 'Catálogo de productos paginado' })
   findAll(@Query() filters: GetProductsFilterDto) {
-    return this.productsService.findAllPublic(filters);
+    return this.getProductsService.findAllPublic(filters);
   }
 
   @Get(':slug')
@@ -23,6 +23,6 @@ export class ProductsPublicController {
   })
   @ApiResponse({ status: 200, description: 'Detalle del producto' })
   findOne(@Param('slug') slug: string) {
-    return this.productsService.findOne(slug);
+    return this.getProductsService.findOne(slug);
   }
 }
