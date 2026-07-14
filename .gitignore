@@ -25,6 +25,9 @@ yarn-error.log*
 # Prisma (Backend)
 generated/prisma
 
+# Tests
+coverage/
+
 # Next.js (Frontend)
 .next
 out/
