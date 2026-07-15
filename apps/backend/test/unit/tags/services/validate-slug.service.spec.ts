@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ValidateSlugService } from './validate-slug.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { ValidateSlugService } from '../../../../src/tags/services/validate-slug.service';
+import { PrismaService } from '../../../../src/prisma/prisma.service';
 
 describe('ValidateSlugService', () => {
   let service: ValidateSlugService;

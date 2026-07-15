@@ -7,5 +7,5 @@
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
   },
-  "jest.rootPath": "apps/backend"
+  "jest.rootPath": "apps/backend/test"
 }

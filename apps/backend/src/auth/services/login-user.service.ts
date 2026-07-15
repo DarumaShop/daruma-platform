@@ -28,7 +28,7 @@ export class LoginUserService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     const salt = await bcrypt.genSalt();
