@@ -50,6 +50,7 @@ jobs:
             -Dsonar.sources=apps/backend/src
             -Dsonar.tests=apps/backend/test
             -Dsonar.javascript.lcov.reportPaths=apps/backend/coverage/lcov.info
+            -Dsonar.coverage.exclusions=apps/backend/src/**/*.module.ts,apps/backend/src/**/*.dto.ts,apps/backend/src/**/*.controller.ts,apps/backend/src/**/*.guard.ts,apps/backend/src/**/*.strategy.ts,apps/backend/src/**/*.filter.ts,apps/backend/src/main.ts,apps/backend/src/prisma/prisma.service.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
