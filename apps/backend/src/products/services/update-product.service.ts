@@ -30,18 +30,21 @@ export class UpdateProductService {
     const id = product.id;
 
     const productDetails = this.productUtils.extractProductDetails(
-      (dto as any).type || '',
-      dto as any,
+      dto.type || product.type,
+      dto,
     );
 
     const {
       imageUrls,
       tagIds,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       notebookDetails,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       notepadDetails,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       posterDetails,
       ...baseData
-    } = dto as any;
+    } = dto;
 
     let resolvedTagIds: string[] | undefined;
     if (tagIds !== undefined) {
@@ -82,7 +85,7 @@ export class UpdateProductService {
 
         if (productDetails !== undefined) {
           updateData.attributes =
-            productDetails === null ? Prisma.JsonNull : (productDetails as any);
+            productDetails === null ? Prisma.JsonNull : productDetails;
         }
 
         return tx.product.update({

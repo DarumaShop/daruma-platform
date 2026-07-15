@@ -20,7 +20,12 @@ export class GetTagsService {
     });
 
     if (search) {
-      return allTags.map(({ id, parentId, ...rest }) => rest);
+      return allTags.map((tag) => {
+        const rest = { ...tag };
+        delete (rest as Partial<typeof rest>).id;
+        delete (rest as Partial<typeof rest>).parentId;
+        return rest;
+      });
     }
 
     type TagWithCount = (typeof allTags)[0];
@@ -45,11 +50,17 @@ export class GetTagsService {
       }
     });
 
-    const cleanTree = (nodes: TagTree[]): any[] => {
-      return nodes.map(({ id, parentId, children, ...rest }) => ({
-        ...rest,
-        children: cleanTree(children),
-      }));
+    type CleanTagNode = Omit<TagTree, 'id' | 'parentId' | 'children'> & {
+      children: CleanTagNode[];
+    };
+
+    const cleanTree = (nodes: TagTree[]): CleanTagNode[] => {
+      return nodes.map((node) => {
+        const rest = { ...node, children: cleanTree(node.children) };
+        delete (rest as Partial<typeof rest>).id;
+        delete (rest as Partial<typeof rest>).parentId;
+        return rest;
+      });
     };
 
     return cleanTree(rootTags);
@@ -106,12 +117,15 @@ export class GetTagsService {
       }
     });
 
-    const cleanTree = (node: TagTree): any => {
-      const { id, parentId, children, ...rest } = node;
-      return {
-        ...rest,
-        children: children.map(cleanTree),
-      };
+    type CleanTagNode = Omit<TagTree, 'id' | 'parentId' | 'children'> & {
+      children: CleanTagNode[];
+    };
+
+    const cleanTree = (node: TagTree): CleanTagNode => {
+      const rest = { ...node, children: node.children.map(cleanTree) };
+      delete (rest as Partial<typeof rest>).id;
+      delete (rest as Partial<typeof rest>).parentId;
+      return rest;
     };
 
     return cleanTree(requestedTag);

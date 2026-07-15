@@ -40,9 +40,10 @@ describe('LogoutUserService', () => {
       const result = await service.logout('user-123');
 
       expect(result).toEqual({ message: 'Sesión cerrada exitosamente' });
-      expect(
-        updateRefreshTokenService.updateRefreshToken,
-      ).toHaveBeenCalledWith('user-123', null);
+      expect(updateRefreshTokenService.updateRefreshToken).toHaveBeenCalledWith(
+        'user-123',
+        null,
+      );
     });
   });
 });

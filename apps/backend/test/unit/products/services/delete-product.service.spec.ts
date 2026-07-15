@@ -49,7 +49,9 @@ describe('DeleteProductService', () => {
 
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
       mockPrismaService.product.delete.mockResolvedValue({ name: 'Prod' });
-      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(undefined);
+      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(
+        undefined,
+      );
 
       const result = await service.remove(slug);
 
@@ -63,9 +65,15 @@ describe('DeleteProductService', () => {
         include: { images: true },
       });
 
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(2);
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith('http://img1');
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith('http://img2');
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(
+        2,
+      );
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith(
+        'http://img1',
+      );
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith(
+        'http://img2',
+      );
 
       expect(prismaService.product.delete).toHaveBeenCalledWith({
         where: { slug },

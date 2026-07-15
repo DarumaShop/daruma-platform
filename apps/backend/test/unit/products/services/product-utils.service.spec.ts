@@ -57,8 +57,10 @@ describe('ProductUtilsService', () => {
       ]);
 
       const result = await service.resolveTagAncestors(['hijo']);
-      
-      expect(result).toEqual(expect.arrayContaining(['hijo', 'padre', 'abuelo']));
+
+      expect(result).toEqual(
+        expect.arrayContaining(['hijo', 'padre', 'abuelo']),
+      );
       expect(result.length).toBe(3);
     });
 
@@ -93,7 +95,7 @@ describe('ProductUtilsService', () => {
   describe('generateSku', () => {
     it('Debería generar un SKU correcto para NOTEBOOK', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(null);
-      
+
       const sku = await service.generateSku('NOTEBOOK', 'Agenda Daruma', {
         pageCount: 'PAGES_100',
         paperType: 'DOTTED',
@@ -106,7 +108,7 @@ describe('ProductUtilsService', () => {
       mockPrismaService.productVariant.findUnique
         .mockResolvedValueOnce({ id: '1' })
         .mockResolvedValueOnce(null);
-      
+
       const sku = await service.generateSku('SIMPLE', 'Cinta', null);
       expect(sku).toMatch(/^PRD-C-[A-Z0-9]{4}$/);
     });
@@ -144,12 +146,16 @@ describe('ProductUtilsService', () => {
 
   describe('revertImages', () => {
     it('Debería llamar a deleteImageService y Prisma para cada url', async () => {
-      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(undefined);
+      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(
+        undefined,
+      );
       mockPrismaService.pendingUpload.deleteMany.mockResolvedValue(undefined);
 
       await service.revertImages(['url1', 'url2']);
 
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(2);
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(
+        2,
+      );
       expect(prismaService.pendingUpload.deleteMany).toHaveBeenCalledTimes(2);
     });
   });

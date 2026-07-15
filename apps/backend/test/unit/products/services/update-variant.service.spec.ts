@@ -49,13 +49,20 @@ describe('UpdateVariantService', () => {
     };
 
     it('Debería actualizar una variante y recalcular precios', async () => {
-      mockPrismaService.productVariant.findUnique.mockResolvedValue(existingVariant);
-      mockProductUtils.extractVariantDetails.mockReturnValue({ coverType: 'SOFT' });
-      
+      mockPrismaService.productVariant.findUnique.mockResolvedValue(
+        existingVariant,
+      );
+      mockProductUtils.extractVariantDetails.mockReturnValue({
+        coverType: 'SOFT',
+      });
+
       const updatedVariant = { sku, price: 150 };
       mockPrismaService.productVariant.update.mockResolvedValue(updatedVariant);
 
-      const dto = { price: 150, notebookVariantDetails: { coverType: 'SOFT' } } as any;
+      const dto = {
+        price: 150,
+        notebookVariantDetails: { coverType: 'SOFT' },
+      } as any;
       const result = await service.updateVariant(sku, dto);
 
       expect(result).toEqual(updatedVariant);
@@ -71,15 +78,17 @@ describe('UpdateVariantService', () => {
         },
         omit: { id: true, productId: true },
       });
-      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith('prod-1');
+      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith(
+        'prod-1',
+      );
     });
 
     it('Debería lanzar NotFoundException si la variante no existe', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateVariant('no-existe', {} as any)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateVariant('no-existe', {} as any),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

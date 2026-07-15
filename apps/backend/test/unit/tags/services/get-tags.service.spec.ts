@@ -42,7 +42,9 @@ describe('GetTagsService', () => {
       expect(result).toEqual([{ name: 'Libretas', slug: 'libretas' }]);
       expect(prismaService.tag.findMany).toHaveBeenCalledWith({
         where: { name: { contains: 'lib', mode: 'insensitive' } },
-        include: { _count: { select: { products: { where: { isActive: true } } } } },
+        include: {
+          _count: { select: { products: { where: { isActive: true } } } },
+        },
       });
     });
 
@@ -77,7 +79,9 @@ describe('GetTagsService', () => {
       expect(prismaService.tag.findUnique).toHaveBeenCalledWith({
         where: { slug },
         omit: { id: true, parentId: true },
-        include: { _count: { select: { products: { where: { isActive: true } } } } },
+        include: {
+          _count: { select: { products: { where: { isActive: true } } } },
+        },
       });
     });
 

@@ -10,7 +10,6 @@ import {
   ValidateNested,
   Min,
   IsBoolean,
-  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PageCount, PaperType, PosterSize } from './get-products-filter.dto';

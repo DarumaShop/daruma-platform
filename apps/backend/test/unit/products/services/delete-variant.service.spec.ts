@@ -61,7 +61,9 @@ describe('DeleteVariantService', () => {
         where: { sku },
         omit: { id: true, productId: true },
       });
-      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith('prod-1');
+      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith(
+        'prod-1',
+      );
       expect(prismaService.productVariant.count).toHaveBeenCalledWith({
         where: { productId: 'prod-1' },
       });

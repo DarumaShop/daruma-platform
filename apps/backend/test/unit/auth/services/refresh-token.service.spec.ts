@@ -95,9 +95,10 @@ describe('RefreshTokenService', () => {
         { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '7d' },
       );
-      expect(
-        updateRefreshTokenService.updateRefreshToken,
-      ).toHaveBeenCalledWith(user.id, 'new-hashed-token');
+      expect(updateRefreshTokenService.updateRefreshToken).toHaveBeenCalledWith(
+        user.id,
+        'new-hashed-token',
+      );
     });
 
     it('Debería lanzar UnauthorizedException si jwtService.verify falla', async () => {

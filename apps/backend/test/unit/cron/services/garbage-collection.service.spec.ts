@@ -54,12 +54,16 @@ describe('GarbageCollectorService', () => {
         { id: '2', url: 'http://url2.com', createdAt: new Date('2020-01-01') },
       ];
       mockPrismaService.pendingUpload.findMany.mockResolvedValue(mockUploads);
-      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(undefined);
+      mockDeleteImageService.deleteImageFromSupabase.mockResolvedValue(
+        undefined,
+      );
       mockPrismaService.pendingUpload.delete.mockResolvedValue(undefined);
 
       await service.handleOrphanedImages();
 
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(2);
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledTimes(
+        2,
+      );
       expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith(
         'http://url1.com',
       );

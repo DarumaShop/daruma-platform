@@ -1,9 +1,7 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DeleteImageService } from '../../uploads/services/delete-image.service';
 import slugify from 'slugify';
-import { Prisma } from '@prisma/client';
-import { CreateProductDto } from '../dto/create-product.dto';
 
 @Injectable()
 export class ProductUtilsService {
@@ -74,7 +72,7 @@ export class ProductUtilsService {
   async generateSku(
     type: import('@prisma/client').ProductType,
     name: string,
-    variantDetails: any,
+    variantDetails: unknown,
   ): Promise<string> {
     let prefix = 'PRD';
     if (type === 'NOTEBOOK') prefix = 'NOTE';
@@ -85,12 +83,17 @@ export class ProductUtilsService {
 
     let attrStr = '';
     if (variantDetails) {
+      const details = variantDetails as {
+        pageCount?: string;
+        paperType?: string;
+        size?: string;
+      };
       if (type === 'NOTEBOOK' || type === 'NOTEPAD') {
-        const pageCount = variantDetails.pageCount?.replace('PAGES_', '') || '';
-        const paperType = variantDetails.paperType || '';
+        const pageCount = details.pageCount?.replace('PAGES_', '') || '';
+        const paperType = details.paperType || '';
         attrStr = `-${pageCount}-${paperType}`;
       } else if (type === 'POSTER') {
-        const size = variantDetails.size || '';
+        const size = details.size || '';
         attrStr = `-${size}`;
       }
     }
@@ -119,14 +122,28 @@ export class ProductUtilsService {
     return sku;
   }
 
-  extractVariantDetails(type: string, variant: any) {
+  extractVariantDetails(
+    type: string,
+    variant: {
+      notebookVariantDetails?: unknown;
+      notepadVariantDetails?: unknown;
+      posterVariantDetails?: unknown;
+    },
+  ) {
     if (type === 'NOTEBOOK') return variant.notebookVariantDetails;
     if (type === 'NOTEPAD') return variant.notepadVariantDetails;
     if (type === 'POSTER') return variant.posterVariantDetails;
     return undefined;
   }
 
-  extractProductDetails(type: string, dto: any) {
+  extractProductDetails(
+    type: string,
+    dto: {
+      notebookDetails?: unknown;
+      notepadDetails?: unknown;
+      posterDetails?: unknown;
+    },
+  ) {
     if (type === 'NOTEBOOK') return dto.notebookDetails;
     if (type === 'NOTEPAD') return dto.notepadDetails;
     if (type === 'POSTER') return dto.posterDetails;

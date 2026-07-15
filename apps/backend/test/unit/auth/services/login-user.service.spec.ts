@@ -79,33 +79,31 @@ describe('LoginUserService', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
-      expect(
-        findUserByIdentifierService.findByIdentifier,
-      ).toHaveBeenCalledWith(dto.identifier);
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        dto.password,
-        user.password,
+      expect(findUserByIdentifierService.findByIdentifier).toHaveBeenCalledWith(
+        dto.identifier,
       );
+      expect(bcrypt.compare).toHaveBeenCalledWith(dto.password, user.password);
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: user.id, email: user.email, role: user.role },
-        { expiresIn: '24h' }
+        { expiresIn: '24h' },
       );
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: user.id, email: user.email, role: user.role },
         { expiresIn: '7d' },
       );
-      expect(
-        updateRefreshTokenService.updateRefreshToken,
-      ).toHaveBeenCalledWith(user.id, 'hashed-refresh-token');
+      expect(updateRefreshTokenService.updateRefreshToken).toHaveBeenCalledWith(
+        user.id,
+        'hashed-refresh-token',
+      );
     });
 
     it('Debería lanzar UnauthorizedException si el usuario no existe', async () => {
       mockFindUserByIdentifierService.findByIdentifier.mockResolvedValue(null);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
-      expect(
-        findUserByIdentifierService.findByIdentifier,
-      ).toHaveBeenCalledWith(dto.identifier);
+      expect(findUserByIdentifierService.findByIdentifier).toHaveBeenCalledWith(
+        dto.identifier,
+      );
     });
 
     it('Debería lanzar UnauthorizedException si la contraseña es incorrecta', async () => {
@@ -113,10 +111,7 @@ describe('LoginUserService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        dto.password,
-        user.password,
-      );
+      expect(bcrypt.compare).toHaveBeenCalledWith(dto.password, user.password);
     });
   });
 });

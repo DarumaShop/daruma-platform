@@ -27,11 +27,14 @@ export class UpdateVariantService {
     );
 
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       notebookVariantDetails,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       notepadVariantDetails,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       posterVariantDetails,
       ...baseData
-    } = dto as any;
+    } = dto;
 
     const updateData: Prisma.ProductVariantUpdateInput = {
       ...baseData,
@@ -39,21 +42,15 @@ export class UpdateVariantService {
 
     if (variantDetails !== undefined) {
       updateData.attributes =
-        variantDetails === null ? Prisma.JsonNull : (variantDetails as any);
+        variantDetails === null ? Prisma.JsonNull : variantDetails;
     }
 
-    try {
-      const variant = await this.prisma.productVariant.update({
-        where: { sku },
-        data: updateData,
-        omit: { id: true, productId: true },
-      });
-      await this.productUtils.recalculateProductPrices(
-        existingVariant.productId,
-      );
-      return variant;
-    } catch (error) {
-      throw error;
-    }
+    const variant = await this.prisma.productVariant.update({
+      where: { sku },
+      data: updateData,
+      omit: { id: true, productId: true },
+    });
+    await this.productUtils.recalculateProductPrices(existingVariant.productId);
+    return variant;
   }
 }

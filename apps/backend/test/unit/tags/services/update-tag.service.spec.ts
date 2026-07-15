@@ -125,9 +125,9 @@ describe('UpdateTagService', () => {
       mockPrismaService.tag.findUnique.mockResolvedValue(existingTag);
       mockPrismaService.tag.update.mockRejectedValue({ code: 'P2002' });
 
-      await expect(service.update('mi-etiqueta', { slug: 'ocupado' })).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.update('mi-etiqueta', { slug: 'ocupado' }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 });

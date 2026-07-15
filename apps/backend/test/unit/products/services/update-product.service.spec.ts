@@ -59,7 +59,7 @@ describe('UpdateProductService', () => {
       mockPrismaService.product.findUnique.mockResolvedValue(product);
       mockProductUtils.extractProductDetails.mockReturnValue(undefined);
       mockProductUtils.resolveTagAncestors.mockResolvedValue(['tag1']);
-      
+
       const oldImages = [{ url: 'http://img1' }, { url: 'http://img2' }];
       mockPrismaService.productImage.findMany.mockResolvedValue(oldImages);
 
@@ -83,8 +83,12 @@ describe('UpdateProductService', () => {
         where: { productId: product.id },
         select: { url: true },
       });
-      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith('http://img1');
-      expect(deleteImageService.deleteImageFromSupabase).not.toHaveBeenCalledWith('http://img2');
+      expect(deleteImageService.deleteImageFromSupabase).toHaveBeenCalledWith(
+        'http://img1',
+      );
+      expect(
+        deleteImageService.deleteImageFromSupabase,
+      ).not.toHaveBeenCalledWith('http://img2');
     });
 
     it('Debería lanzar NotFoundException si el producto no existe', async () => {
@@ -98,9 +102,12 @@ describe('UpdateProductService', () => {
     it('Debería lanzar ConflictException si prisma arroja P2002', async () => {
       mockPrismaService.product.findUnique.mockResolvedValue(product);
       mockPrismaService.productImage.findMany.mockResolvedValue([]);
-      
+
       mockPrismaService.$transaction.mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '1' })
+        new Prisma.PrismaClientKnownRequestError('', {
+          code: 'P2002',
+          clientVersion: '1',
+        }),
       );
 
       await expect(

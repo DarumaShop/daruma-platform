@@ -52,12 +52,14 @@ describe('CreateProductService', () => {
     it('Debería crear un producto exitosamente', async () => {
       mockProductUtils.generateSlug.mockResolvedValue('notebook');
       mockProductUtils.resolveTagAncestors.mockResolvedValue(['tag1', 'tag2']);
-      mockProductUtils.extractProductDetails.mockReturnValue({ coverType: 'HARD' });
-      
+      mockProductUtils.extractProductDetails.mockReturnValue({
+        coverType: 'HARD',
+      });
+
       const createdProduct = { name: 'Notebook', slug: 'notebook' };
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
         // Simular que el callback ejecuta correctamente
-        // En una prueba unitaria pura de NestJS con Prisma, no mockeamos tx tan profundamente 
+        // En una prueba unitaria pura de NestJS con Prisma, no mockeamos tx tan profundamente
         // a menos que sea necesario. Aquí devolvemos el valor deseado.
         return createdProduct;
       });
@@ -66,7 +68,9 @@ describe('CreateProductService', () => {
 
       expect(result).toEqual(createdProduct);
       expect(productUtils.generateSlug).toHaveBeenCalledWith(validDto.name);
-      expect(productUtils.resolveTagAncestors).toHaveBeenCalledWith(validDto.tagIds);
+      expect(productUtils.resolveTagAncestors).toHaveBeenCalledWith(
+        validDto.tagIds,
+      );
       expect(prismaService.$transaction).toHaveBeenCalled();
     });
 
@@ -78,9 +82,12 @@ describe('CreateProductService', () => {
     it('Debería lanzar ConflictException si prisma arroja P2002', async () => {
       mockProductUtils.generateSlug.mockResolvedValue('notebook');
       mockProductUtils.resolveTagAncestors.mockResolvedValue([]);
-      
+
       mockPrismaService.$transaction.mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError('', { code: 'P2002', clientVersion: '1' })
+        new Prisma.PrismaClientKnownRequestError('', {
+          code: 'P2002',
+          clientVersion: '1',
+        }),
       );
 
       await expect(service.create(validDto)).rejects.toThrow(ConflictException);
@@ -90,13 +97,15 @@ describe('CreateProductService', () => {
     it('Debería revertir imágenes y relanzar el error si ocurre otro error', async () => {
       mockProductUtils.generateSlug.mockResolvedValue('notebook');
       mockProductUtils.resolveTagAncestors.mockResolvedValue([]);
-      
+
       const error = new Error('Random error');
       mockPrismaService.$transaction.mockRejectedValue(error);
       mockProductUtils.revertImages.mockResolvedValue(undefined);
 
       await expect(service.create(validDto)).rejects.toThrow('Random error');
-      expect(productUtils.revertImages).toHaveBeenCalledWith(validDto.imageUrls);
+      expect(productUtils.revertImages).toHaveBeenCalledWith(
+        validDto.imageUrls,
+      );
     });
   });
 });

@@ -5,7 +5,6 @@ import { PrismaService } from '../../../../src/prisma/prisma.service';
 import { InternalServerErrorException } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
-import { randomUUID } from 'node:crypto';
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(),
@@ -27,7 +26,6 @@ jest.mock('node:crypto', () => ({
 
 describe('UploadImageService', () => {
   let service: UploadImageService;
-  let configService: ConfigService;
   let prismaService: PrismaService;
 
   const mockConfigService = {
@@ -64,7 +62,6 @@ describe('UploadImageService', () => {
     }).compile();
 
     service = module.get<UploadImageService>(UploadImageService);
-    configService = module.get<ConfigService>(ConfigService);
     prismaService = module.get<PrismaService>(PrismaService);
   });
 
@@ -88,7 +85,10 @@ describe('UploadImageService', () => {
   });
 
   describe('processAndUploadImage', () => {
-    const file = { buffer: Buffer.from('mock-image'), originalname: 'test.png' };
+    const file = {
+      buffer: Buffer.from('mock-image'),
+      originalname: 'test.png',
+    };
     const options = { targetWidth: 100, targetHeight: 100 };
 
     it('Debería procesar, subir la imagen a Supabase y guardar en PendingUpload', async () => {
@@ -123,10 +123,16 @@ describe('UploadImageService', () => {
         data: { publicUrl: 'http://public-url.com/mock-uuid.webp' },
       });
 
-      const cropOptions = { cropX: 10, cropY: 10, cropWidth: 50, cropHeight: 50 };
+      const cropOptions = {
+        cropX: 10,
+        cropY: 10,
+        cropWidth: 50,
+        cropHeight: 50,
+      };
       await service.processAndUploadImage(file, cropOptions);
 
       const sharpInstance = (sharp as unknown as jest.Mock)();
+
       expect(sharpInstance.extract).toHaveBeenCalledWith({
         left: 10,
         top: 10,
@@ -141,9 +147,9 @@ describe('UploadImageService', () => {
         error: new Error('Upload failed'),
       });
 
-      await expect(service.processAndUploadImage(file, options)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        service.processAndUploadImage(file, options),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

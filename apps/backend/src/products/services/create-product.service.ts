@@ -67,7 +67,7 @@ export class CreateProductService {
             images: { create: imagesData },
             tags: { connect: tagsData },
             attributes: productDetails
-              ? (productDetails as any)
+              ? (productDetails as Prisma.InputJsonValue)
               : Prisma.JsonNull,
           },
           omit: { id: true },

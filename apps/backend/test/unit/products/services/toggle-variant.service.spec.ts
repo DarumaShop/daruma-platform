@@ -48,7 +48,10 @@ describe('ToggleVariantService', () => {
   describe('activateVariant', () => {
     it('Debería activar la variante y recalcular precios', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(variant);
-      mockPrismaService.productVariant.update.mockResolvedValue({ sku, isActive: true });
+      mockPrismaService.productVariant.update.mockResolvedValue({
+        sku,
+        isActive: true,
+      });
 
       const result = await service.activateVariant(sku);
 
@@ -61,7 +64,9 @@ describe('ToggleVariantService', () => {
         data: { isActive: true },
         omit: { id: true, productId: true },
       });
-      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith('prod-1');
+      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith(
+        'prod-1',
+      );
     });
 
     it('Debería lanzar NotFoundException si la variante no existe', async () => {
@@ -76,7 +81,10 @@ describe('ToggleVariantService', () => {
   describe('deactivateVariant', () => {
     it('Debería desactivar variante, recalcular precios y NO desactivar producto si quedan activas', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(variant);
-      mockPrismaService.productVariant.update.mockResolvedValue({ sku, isActive: false });
+      mockPrismaService.productVariant.update.mockResolvedValue({
+        sku,
+        isActive: false,
+      });
       mockPrismaService.productVariant.count.mockResolvedValue(1);
 
       const result = await service.deactivateVariant(sku);
@@ -87,13 +95,18 @@ describe('ToggleVariantService', () => {
         data: { isActive: false },
         omit: { id: true, productId: true },
       });
-      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith('prod-1');
+      expect(productUtils.recalculateProductPrices).toHaveBeenCalledWith(
+        'prod-1',
+      );
       expect(prismaService.product.update).not.toHaveBeenCalled();
     });
 
     it('Debería desactivar variante, recalcular precios y DESACTIVAR producto si NO quedan activas', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(variant);
-      mockPrismaService.productVariant.update.mockResolvedValue({ sku, isActive: false });
+      mockPrismaService.productVariant.update.mockResolvedValue({
+        sku,
+        isActive: false,
+      });
       mockPrismaService.productVariant.count.mockResolvedValue(0);
 
       await service.deactivateVariant(sku);
@@ -108,7 +121,10 @@ describe('ToggleVariantService', () => {
   describe('updateStock', () => {
     it('Debería actualizar el stock', async () => {
       mockPrismaService.productVariant.findUnique.mockResolvedValue(variant);
-      mockPrismaService.productVariant.update.mockResolvedValue({ sku, stock: 50 });
+      mockPrismaService.productVariant.update.mockResolvedValue({
+        sku,
+        stock: 50,
+      });
 
       const result = await service.updateStock(sku, 50);
 

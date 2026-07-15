@@ -9,7 +9,6 @@ jest.mock('@supabase/supabase-js', () => ({
 
 describe('DeleteImageService', () => {
   let service: DeleteImageService;
-  let configService: ConfigService;
 
   const mockConfigService = {
     get: jest.fn((key) => {
@@ -37,7 +36,6 @@ describe('DeleteImageService', () => {
     }).compile();
 
     service = module.get<DeleteImageService>(DeleteImageService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {

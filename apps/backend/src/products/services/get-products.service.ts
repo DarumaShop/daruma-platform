@@ -17,22 +17,22 @@ export class GetProductsService {
     const variantFilters: Prisma.ProductVariantWhereInput = { AND: [] };
 
     if (pageCount) {
-      (variantFilters.AND as any[]).push({
+      (variantFilters.AND as Prisma.ProductVariantWhereInput[]).push({
         attributes: { path: ['pageCount'], equals: pageCount },
       });
     }
     if (paperType) {
-      (variantFilters.AND as any[]).push({
+      (variantFilters.AND as Prisma.ProductVariantWhereInput[]).push({
         attributes: { path: ['paperType'], equals: paperType },
       });
     }
     if (posterSize) {
-      (variantFilters.AND as any[]).push({
+      (variantFilters.AND as Prisma.ProductVariantWhereInput[]).push({
         attributes: { path: ['size'], equals: posterSize },
       });
     }
 
-    if ((variantFilters.AND as any[]).length > 0) {
+    if ((variantFilters.AND as Prisma.ProductVariantWhereInput[]).length > 0) {
       whereClause.variants = { some: variantFilters };
     }
   }

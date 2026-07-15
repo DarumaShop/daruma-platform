@@ -49,7 +49,7 @@ export class UploadImageService {
     try {
       let imagePipeline = sharp(file.buffer);
 
-      const parseNumber = (val: any) => {
+      const parseNumber = (val: unknown) => {
         if (
           val === undefined ||
           val === null ||

@@ -51,8 +51,13 @@ export class UpdateTagService {
       });
 
       return result;
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('El slug de la etiqueta ya está en uso');
       }
       throw error;

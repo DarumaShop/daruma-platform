@@ -8,7 +8,7 @@ export class UploadImageDto {
     description: 'El archivo de imagen (PNG, JPG, WEBP)',
   })
   @IsOptional()
-  file: any;
+  file?: Express.Multer.File;
 
   @ApiPropertyOptional({
     description: 'Ancho objetivo al que se escalará la imagen',

@@ -48,7 +48,10 @@ describe('UpdateRefreshTokenService', () => {
     it('Debería setear el refreshToken en null', async () => {
       const id = '1';
 
-      mockPrismaService.user.update.mockResolvedValue({ id, refreshToken: null });
+      mockPrismaService.user.update.mockResolvedValue({
+        id,
+        refreshToken: null,
+      });
 
       const result = await service.updateRefreshToken(id, null);
 
