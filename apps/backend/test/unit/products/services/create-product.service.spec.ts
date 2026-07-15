@@ -40,7 +40,7 @@ describe('CreateProductService', () => {
   });
 
   describe('create', () => {
-    const validDto = {
+    const validDto: any = {
       name: 'Notebook',
       type: 'NOTEBOOK' as any,
       description: 'Desc',
@@ -58,9 +58,6 @@ describe('CreateProductService', () => {
 
       const createdProduct = { name: 'Notebook', slug: 'notebook' };
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
-        // Simular que el callback ejecuta correctamente
-        // En una prueba unitaria pura de NestJS con Prisma, no mockeamos tx tan profundamente
-        // a menos que sea necesario. Aquí devolvemos el valor deseado.
         return createdProduct;
       });
 

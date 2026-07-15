@@ -51,7 +51,6 @@ export class ToggleVariantService {
 
     await this.productUtils.recalculateProductPrices(variant.productId);
 
-    // Desactivación automática del padre si ya no quedan variantes activas
     const remainingActiveVariants = await this.prisma.productVariant.count({
       where: { productId: variant.productId, isActive: true },
     });

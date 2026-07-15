@@ -14,10 +14,6 @@ import {
 import { Type } from 'class-transformer';
 import { PageCount, PaperType, PosterSize } from './get-products-filter.dto';
 
-// ==========================================
-// DETALLES COMUNES (Padre)
-// ==========================================
-
 export class NotebookDetailsDto {
   @ApiProperty({ description: 'Largo en cm' })
   @IsInt()
@@ -56,10 +52,6 @@ export class PosterDetailsDto {
   height: number;
 }
 
-// ==========================================
-// DETALLES DE VARIANTE
-// ==========================================
-
 export class NotebookVariantDetailsDto {
   @ApiProperty({ enum: PageCount, description: 'Número de páginas' })
   @IsEnum(PageCount)
@@ -85,10 +77,6 @@ export class PosterVariantDetailsDto {
   @IsEnum(PosterSize)
   size: PosterSize;
 }
-
-// ==========================================
-// DTO DE VARIANTE PRINCIPAL
-// ==========================================
 
 export class CreateProductVariantDto {
   @ApiProperty({ description: 'Precio base en moneda o centavos' })
@@ -126,10 +114,6 @@ export class CreateProductVariantDto {
   @Type(() => PosterVariantDetailsDto)
   posterVariantDetails?: PosterVariantDetailsDto;
 }
-
-// ==========================================
-// DTO DEL PRODUCTO PADRE
-// ==========================================
 
 export class CreateProductDto {
   @ApiProperty({ description: 'Nombre del producto padre' })

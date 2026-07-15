@@ -56,7 +56,7 @@ describe('GetProductsService', () => {
       const mockProducts = [{ name: 'P1' }, { name: 'P2' }];
       mockPrismaService.product.findMany.mockResolvedValue(mockProducts);
 
-      const result = await service.findAllAdmin({ type: 'SIMPLE' });
+      const result = await service.findAllAdmin({ type: 'SIMPLE' as any });
 
       expect(result.data).toEqual(mockProducts);
       expect(result.meta.totalItems).toBe(2);

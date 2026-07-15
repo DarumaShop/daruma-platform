@@ -44,8 +44,8 @@ describe('CreateTagService', () => {
 
     it('Debería añadir un sufijo numérico si el slug base existe', async () => {
       mockPrismaService.tag.findUnique
-        .mockResolvedValueOnce({ id: '1' }) // 'mi-etiqueta' existe
-        .mockResolvedValueOnce(null); // 'mi-etiqueta-2' no existe
+        .mockResolvedValueOnce({ id: '1' })
+        .mockResolvedValueOnce(null);
 
       const slug = await service.generateSlug('Mi Etiqueta');
 
@@ -57,7 +57,7 @@ describe('CreateTagService', () => {
   describe('create', () => {
     it('Debería crear una etiqueta raíz sin padre', async () => {
       const dto = { name: 'Nueva Etiqueta' };
-      mockPrismaService.tag.findUnique.mockResolvedValue(null); // Para el slug
+      mockPrismaService.tag.findUnique.mockResolvedValue(null);
       const createdTag = { name: 'Nueva Etiqueta', slug: 'nueva-etiqueta' };
       mockPrismaService.tag.create.mockResolvedValue(createdTag);
 
@@ -77,8 +77,8 @@ describe('CreateTagService', () => {
     it('Debería crear una etiqueta hija si parentSlug es válido', async () => {
       const dto = { name: 'Hija', parentSlug: 'padre' };
       mockPrismaService.tag.findUnique
-        .mockResolvedValueOnce({ id: 'parent-1', slug: 'padre' }) // Busca el padre
-        .mockResolvedValueOnce(null); // Para el slug 'hija'
+        .mockResolvedValueOnce({ id: 'parent-1', slug: 'padre' })
+        .mockResolvedValueOnce(null);
 
       const createdTag = { name: 'Hija', slug: 'hija', parentId: 'parent-1' };
       mockPrismaService.tag.create.mockResolvedValue(createdTag);

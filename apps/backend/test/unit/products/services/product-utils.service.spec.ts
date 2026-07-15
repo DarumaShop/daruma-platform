@@ -61,7 +61,7 @@ describe('ProductUtilsService', () => {
       expect(result).toEqual(
         expect.arrayContaining(['hijo', 'padre', 'abuelo']),
       );
-      expect(result.length).toBe(3);
+      expect(result).toHaveLength(3);
     });
 
     it('Debería lanzar BadRequestException si el tag proveído no existe en DB', async () => {
@@ -109,7 +109,7 @@ describe('ProductUtilsService', () => {
         .mockResolvedValueOnce({ id: '1' })
         .mockResolvedValueOnce(null);
 
-      const sku = await service.generateSku('SIMPLE', 'Cinta', null);
+      const sku = await service.generateSku('SIMPLE' as any, 'Cinta', null);
       expect(sku).toMatch(/^PRD-C-[A-Z0-9]{4}$/);
     });
   });

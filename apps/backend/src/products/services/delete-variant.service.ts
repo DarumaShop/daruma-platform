@@ -27,7 +27,6 @@ export class DeleteVariantService {
 
     await this.productUtils.recalculateProductPrices(variant.productId);
 
-    // Desactivación automática si ya no quedan variantes
     const remainingVariants = await this.prisma.productVariant.count({
       where: { productId: variant.productId },
     });

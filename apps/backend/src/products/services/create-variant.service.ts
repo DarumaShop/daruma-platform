@@ -60,8 +60,8 @@ export class CreateVariantService {
       price: dto.price,
       discountPrice: dto.discountPrice,
       stock: dto.stock ?? 0,
-      isActive: false, // Las variantes nacen como borrador por defecto
-      attributes: variantDetails ? variantDetails : Prisma.JsonNull,
+      isActive: false,
+      attributes: variantDetails || Prisma.JsonNull,
     };
 
     try {

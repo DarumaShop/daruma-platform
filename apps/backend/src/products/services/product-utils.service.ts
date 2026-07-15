@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DeleteImageService } from '../../uploads/services/delete-image.service';
 import slugify from 'slugify';
+import { randomBytes } from 'node:crypto';
 
 @Injectable()
 export class ProductUtilsService {
@@ -111,10 +112,7 @@ export class ProductUtilsService {
       if (!existing) {
         isUnique = true;
       } else {
-        const randomHash = Math.random()
-          .toString(36)
-          .substring(2, 6)
-          .toUpperCase();
+        const randomHash = randomBytes(2).toString('hex').toUpperCase();
         sku = `${baseSku}-${randomHash}`;
       }
     }

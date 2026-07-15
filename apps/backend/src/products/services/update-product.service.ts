@@ -34,17 +34,10 @@ export class UpdateProductService {
       dto,
     );
 
-    const {
-      imageUrls,
-      tagIds,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      notebookDetails,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      notepadDetails,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      posterDetails,
-      ...baseData
-    } = dto;
+    const { imageUrls, tagIds, ...baseData } = dto;
+    delete baseData.notebookDetails;
+    delete baseData.notepadDetails;
+    delete baseData.posterDetails;
 
     let resolvedTagIds: string[] | undefined;
     if (tagIds !== undefined) {
@@ -84,8 +77,7 @@ export class UpdateProductService {
         }
 
         if (productDetails !== undefined) {
-          updateData.attributes =
-            productDetails === null ? Prisma.JsonNull : productDetails;
+          updateData.attributes = productDetails ?? Prisma.JsonNull;
         }
 
         return tx.product.update({

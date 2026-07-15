@@ -83,8 +83,8 @@ describe('UpdateTagService', () => {
     it('Debería actualizar el parentId si parentSlug es válido', async () => {
       const dto = { parentSlug: 'padre' };
       mockPrismaService.tag.findUnique
-        .mockResolvedValueOnce(existingTag) // Busca la etiqueta a actualizar
-        .mockResolvedValueOnce({ id: 'padre-1' }); // Busca el nuevo padre
+        .mockResolvedValueOnce(existingTag)
+        .mockResolvedValueOnce({ id: 'padre-1' });
 
       mockPrismaService.tag.update.mockResolvedValue({});
 
@@ -113,8 +113,8 @@ describe('UpdateTagService', () => {
     it('Debería lanzar NotFoundException si el nuevo parentSlug no existe', async () => {
       const dto = { parentSlug: 'no-existe' };
       mockPrismaService.tag.findUnique
-        .mockResolvedValueOnce(existingTag) // Etiqueta original
-        .mockResolvedValueOnce(null); // Padre
+        .mockResolvedValueOnce(existingTag)
+        .mockResolvedValueOnce(null);
 
       await expect(service.update('mi-etiqueta', dto)).rejects.toThrow(
         NotFoundException,

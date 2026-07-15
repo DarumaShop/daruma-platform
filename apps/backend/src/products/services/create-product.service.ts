@@ -61,7 +61,7 @@ export class CreateProductService {
             description: dto.description,
             type: dto.type,
             isFeatured: dto.isFeatured ?? false,
-            isActive: false, // Inactivo por defecto hasta que tenga variantes y se publique
+            isActive: false,
             basePrice: 0,
             maxPrice: 0,
             images: { create: imagesData },

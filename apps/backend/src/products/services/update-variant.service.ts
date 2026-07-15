@@ -26,23 +26,17 @@ export class UpdateVariantService {
       dto,
     );
 
-    const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      notebookVariantDetails,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      notepadVariantDetails,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      posterVariantDetails,
-      ...baseData
-    } = dto;
+    const baseData = { ...dto };
+    delete baseData.notebookVariantDetails;
+    delete baseData.notepadVariantDetails;
+    delete baseData.posterVariantDetails;
 
     const updateData: Prisma.ProductVariantUpdateInput = {
       ...baseData,
     };
 
     if (variantDetails !== undefined) {
-      updateData.attributes =
-        variantDetails === null ? Prisma.JsonNull : variantDetails;
+      updateData.attributes = variantDetails ?? Prisma.JsonNull;
     }
 
     const variant = await this.prisma.productVariant.update({

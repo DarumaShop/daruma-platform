@@ -64,7 +64,7 @@ describe('UpdateProductService', () => {
       mockPrismaService.productImage.findMany.mockResolvedValue(oldImages);
 
       mockPrismaService.$transaction.mockImplementation(async (callback) => {
-        return { name: 'New Name' }; // Dummy result
+        return { name: 'New Name' };
       });
 
       const dto = {
