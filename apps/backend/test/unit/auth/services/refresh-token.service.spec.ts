@@ -79,6 +79,10 @@ describe('RefreshTokenService', () => {
       expect(result).toEqual({
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
+        user: {
+          email: user.email,
+          role: user.role,
+        },
       });
       expect(jwtService.verify).toHaveBeenCalledWith(validToken);
       expect(findUserByIdService.findById).toHaveBeenCalledWith(payload.sub);

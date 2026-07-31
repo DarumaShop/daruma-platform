@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateTagDto } from '../dto/update-tag.dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class UpdateTagService {
@@ -14,6 +15,23 @@ export class UpdateTagService {
     const existingTag = await this.prisma.tag.findUnique({ where: { slug } });
     if (!existingTag) {
       throw new NotFoundException(`Etiqueta con slug ${slug} no encontrada`);
+    }
+
+    let updatedSlug = dto.slug;
+    if (dto.name && dto.name !== existingTag.name && !dto.slug) {
+      const baseSlug = slugify(dto.name, { lower: true, strict: true });
+      let tempSlug = baseSlug;
+      let counter = 1;
+      while (true) {
+        const existing = await this.prisma.tag.findUnique({
+          where: { slug: tempSlug },
+        });
+        // We only break if the found tag is either null, or it is exactly the tag we are editing
+        if (!existing || existing.id === existingTag.id) break;
+        counter++;
+        tempSlug = `${baseSlug}-${counter}`;
+      }
+      updatedSlug = tempSlug;
     }
 
     let newParentId: string | null | undefined = undefined;
@@ -44,7 +62,7 @@ export class UpdateTagService {
         where: { id: existingTag.id },
         data: {
           name: dto.name,
-          slug: dto.slug,
+          slug: updatedSlug,
           parentId: newParentId,
         },
         omit: { id: true, parentId: true },

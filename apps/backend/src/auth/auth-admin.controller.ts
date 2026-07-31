@@ -1,4 +1,5 @@
-import { Controller, Get, Post, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -44,7 +45,12 @@ export class AuthAdminController {
     summary: '(ADMIN) Cierra sesión e invalida el Refresh Token.',
   })
   @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente' })
-  async logout(@Req() req: { user: { id: string } }) {
+  async logout(
+    @Req() req: { user: { id: string } },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
     return this.logoutUserService.logout(req.user.id);
   }
 }

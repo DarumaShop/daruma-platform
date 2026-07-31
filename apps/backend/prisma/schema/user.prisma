@@ -5,7 +5,9 @@ model User {
   password     String
   firstName    String
   lastName     String
-  refreshToken String?
+  refreshToken         String?
+  resetPasswordOtp     String?
+  resetPasswordExpires DateTime?
   
   role         Role     @default(USER)
   

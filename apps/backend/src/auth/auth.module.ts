@@ -7,6 +7,8 @@ import { RegisterUserService } from './services/register-user.service';
 import { RefreshTokenService } from './services/refresh-token.service';
 import { LogoutUserService } from './services/logout-user.service';
 import { GenerateInviteService } from './services/generate-invite.service';
+import { ForgotPasswordService } from './services/forgot-password.service';
+import { ResetPasswordService } from './services/reset-password.service';
 import { AuthPublicController } from './auth-public.controller';
 import { AuthAdminController } from './auth-admin.controller';
 import { UsersModule } from '../users/users.module';
@@ -30,6 +32,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     RefreshTokenService,
     LogoutUserService,
     GenerateInviteService,
+    ForgotPasswordService,
+    ResetPasswordService,
     JwtStrategy,
   ],
 })

@@ -49,6 +49,10 @@ export class RefreshTokenService {
       return {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
+        user: {
+          email: user.email,
+          role: user.role,
+        },
       };
     } catch {
       throw new UnauthorizedException('Refresh token inválido o expirado');

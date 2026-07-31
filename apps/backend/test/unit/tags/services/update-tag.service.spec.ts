@@ -48,7 +48,7 @@ describe('UpdateTagService', () => {
         where: { id: existingTag.id },
         data: {
           name: dto.name,
-          slug: undefined,
+          slug: 'nuevo-nombre', // El servicio auto-genera el slug si no se envía
           parentId: undefined,
         },
         omit: { id: true, parentId: true },

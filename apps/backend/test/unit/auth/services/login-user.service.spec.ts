@@ -78,6 +78,10 @@ describe('LoginUserService', () => {
       expect(result).toEqual({
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
+        user: {
+          email: user.email,
+          role: user.role,
+        },
       });
       expect(findUserByIdentifierService.findByIdentifier).toHaveBeenCalledWith(
         dto.identifier,
@@ -85,7 +89,7 @@ describe('LoginUserService', () => {
       expect(bcrypt.compare).toHaveBeenCalledWith(dto.password, user.password);
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: user.id, email: user.email, role: user.role },
-        { expiresIn: '24h' },
+        { expiresIn: '15m' },
       );
       expect(jwtService.sign).toHaveBeenCalledWith(
         { sub: user.id, email: user.email, role: user.role },
